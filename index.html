@@ -1,0 +1,3463 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>สมุดรายรับ-รายจ่าย ร้านกระยาสารทแม่สวิง | ระบบสรุปบัญชีและซิงก์ Google Sheets อัตโนมัติ</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anuphan:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #f3f6f4;
+      --surface: #ffffff;
+      --surface-alt: #f8faf9;
+      --border: #dce5e0;
+      --border-strong: #c2d1c9;
+      --ink: #13221b;
+      --ink-secondary: #364940;
+      --muted: #5e7268;
+
+      /* Heritage Pandan & Revenue Green */
+      --brand: #0d7446;
+      --brand-dark: #085231;
+      --brand-hover: #0a5e38;
+      --brand-soft: #e6f6ee;
+      --brand-border: #a7dfc2;
+
+      /* Income Group Palette */
+      --inc-head: #065f46;
+      --inc-bg: #f3fcf7;
+      --inc-bg-alt: #e8f8ef;
+      --inc-total-bg: #dcfce7;
+      --inc-total-alt: #ccf5db;
+      --inc-ink: #065f46;
+
+      /* Expense Group Palette */
+      --exp-head: #9a3412;
+      --exp-bg: #fffaf5;
+      --exp-bg-alt: #fff2e3;
+      --exp-total-bg: #ffedd5;
+      --exp-total-alt: #fed7aa;
+      --exp-ink: #9a3412;
+
+      /* Semantic States */
+      --info-bg: #eff6ff;
+      --info-ink: #1d4ed8;
+      --info-border: #bfdbfe;
+      --warn-bg: #fffbeb;
+      --warn-ink: #92400e;
+      --warn-border: #fde68a;
+      --danger-bg: #fef2f2;
+      --danger-ink: #b91c1c;
+      --danger-border: #fecaca;
+
+      --radius-sm: 10px;
+      --radius: 16px;
+      --radius-lg: 20px;
+      --shadow-sm: 0 1px 3px rgba(15, 35, 26, 0.05);
+      --shadow: 0 6px 18px rgba(15, 35, 26, 0.06), 0 2px 4px rgba(15, 35, 26, 0.04);
+
+      --font-heading: 'Anuphan', 'Sarabun', -apple-system, BlinkMacSystemFont, "Segoe UI", Tahoma, sans-serif;
+      --font-body: 'Sarabun', 'Anuphan', -apple-system, BlinkMacSystemFont, "Segoe UI", Tahoma, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: var(--font-body);
+      color: var(--ink);
+      background: var(--bg);
+      line-height: 1.6;
+      font-size: 16px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    h1, h2, h3, h4, .heading-font {
+      font-family: var(--font-heading);
+      margin: 0;
+    }
+
+    .num {
+      font-variant-numeric: tabular-nums;
+      font-feature-settings: "tnum" 1;
+    }
+
+    /* ================= HEADER & LOGO.PNG SLOT ================= */
+    .topbar {
+      background: linear-gradient(135deg, #07472b 0%, #0d6e43 58%, #118451 100%);
+      color: #ffffff;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+    }
+
+    .topbar-inner {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 20px 24px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+    }
+
+    .brand-identity {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .logo-slot {
+      position: relative;
+      width: 68px;
+      height: 68px;
+      border-radius: 16px;
+      background: #ffffff;
+      border: 2px solid rgba(255, 255, 255, 0.55);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.16);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      overflow: hidden;
+      flex-shrink: 0;
+      transition: transform 0.15s ease, border-color 0.15s ease;
+      padding: 4px;
+    }
+
+    .logo-slot:hover,
+    .logo-slot.dragover {
+      transform: scale(1.03);
+      border-color: #a7f3d0;
+    }
+
+    .logo-slot:focus-visible {
+      outline: 3px solid #ffffff;
+      outline-offset: 2px;
+    }
+
+    .logo-fallback {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      line-height: 1.1;
+      color: var(--brand-dark);
+    }
+
+    .logo-fallback-initials {
+      font-family: var(--font-heading);
+      font-weight: 700;
+      font-size: 22px;
+      letter-spacing: -0.5px;
+    }
+
+    .logo-fallback-hint {
+      font-family: var(--font-heading);
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .logo-img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: none;
+    }
+
+    .logo-slot.has-logo .logo-img {
+      display: block;
+    }
+
+    .logo-slot.has-logo .logo-fallback {
+      display: none;
+    }
+
+    .logo-hover-tip {
+      position: absolute;
+      inset: 0;
+      background: rgba(7, 71, 43, 0.82);
+      color: #ffffff;
+      font-family: var(--font-heading);
+      font-size: 11px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 4px;
+      opacity: 0;
+      transition: opacity 0.15s ease;
+    }
+
+    .logo-slot:hover .logo-hover-tip {
+      opacity: 1;
+    }
+
+    .brand-text h1 {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      line-height: 1.25;
+    }
+
+    .brand-meta {
+      margin-top: 5px;
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.9);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 16px;
+    }
+
+    .topbar-actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .top-btn, .ext-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 9px 14px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      color: #ffffff;
+      text-decoration: none;
+      font-family: var(--font-heading);
+      font-size: 13.5px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s ease, border-color 0.15s ease;
+    }
+
+    .top-btn:hover, .ext-link:hover {
+      background: rgba(255, 255, 255, 0.25);
+      border-color: rgba(255, 255, 255, 0.48);
+    }
+
+    .top-btn.highlight {
+      background: #ffffff;
+      color: var(--brand-dark);
+      border-color: #ffffff;
+    }
+
+    .top-btn.highlight:hover {
+      background: #ecfdf5;
+    }
+
+    .top-btn:focus-visible, .ext-link:focus-visible {
+      outline: 2px solid #ffffff;
+      outline-offset: 2px;
+    }
+
+    /* ================= MAIN SHELL ================= */
+    .container {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 22px 24px 56px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* ================= AUTO-SYNC PIPELINE BAR ================= */
+    .sync-hub {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      padding: 16px 20px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .pipeline-nodes {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .pipe-step {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 13px;
+      border-radius: 10px;
+      font-family: var(--font-heading);
+      font-size: 13.5px;
+      font-weight: 600;
+      border: 1px solid var(--border);
+      background: var(--surface-alt);
+      color: var(--ink-secondary);
+    }
+
+    .pipe-step.ok {
+      background: var(--brand-soft);
+      border-color: var(--brand-border);
+      color: var(--inc-head);
+    }
+
+    .pipe-step.loading {
+      background: var(--info-bg);
+      border-color: var(--info-border);
+      color: var(--info-ink);
+    }
+
+    .pipe-step.warn {
+      background: var(--warn-bg);
+      border-color: var(--warn-border);
+      color: var(--warn-ink);
+    }
+
+    .pipe-arrow {
+      color: var(--muted);
+      font-weight: 700;
+      font-size: 15px;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+      flex-shrink: 0;
+    }
+
+    .sync-controls {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .auto-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      font-family: var(--font-heading);
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--ink-secondary);
+      padding: 6px 10px;
+      border-radius: 9px;
+      background: var(--surface-alt);
+      border: 1px solid var(--border);
+      user-select: none;
+    }
+
+    .auto-toggle input {
+      accent-color: var(--brand);
+      width: 16px;
+      height: 16px;
+      margin: 0;
+      cursor: pointer;
+    }
+
+    /* ================= BUTTONS & INPUTS ================= */
+    .btn {
+      font-family: var(--font-heading);
+      font-size: 14px;
+      font-weight: 600;
+      padding: 9px 16px;
+      min-height: 40px;
+      border-radius: 10px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      transition: background 0.15s ease, border-color 0.15s ease, transform 0.05s ease;
+      white-space: nowrap;
+    }
+
+    .btn:active {
+      transform: translateY(1px);
+    }
+
+    .btn:focus-visible,
+    .input:focus-visible,
+    .select:focus-visible {
+      outline: 2px solid var(--brand);
+      outline-offset: 2px;
+    }
+
+    .btn-primary {
+      background: var(--brand);
+      color: #ffffff;
+    }
+
+    .btn-primary:hover {
+      background: var(--brand-hover);
+    }
+
+    .btn-secondary {
+      background: var(--surface);
+      color: var(--ink-secondary);
+      border-color: var(--border-strong);
+    }
+
+    .btn-secondary:hover {
+      background: var(--surface-alt);
+      border-color: var(--ink-secondary);
+    }
+
+    .btn-soft {
+      background: var(--brand-soft);
+      color: var(--brand-dark);
+      border-color: var(--brand-border);
+    }
+
+    .btn-soft:hover {
+      background: #d5f0e2;
+    }
+
+    .btn-danger-ghost {
+      background: transparent;
+      color: var(--danger-ink);
+      border: 1px solid transparent;
+      padding: 5px 10px;
+      min-height: 30px;
+      font-size: 13px;
+      border-radius: 7px;
+    }
+
+    .btn-danger-ghost:hover {
+      background: var(--danger-bg);
+      border-color: var(--danger-border);
+    }
+
+    .input, .select {
+      font-family: var(--font-body);
+      font-size: 15px;
+      color: var(--ink);
+      background: var(--surface);
+      border: 1px solid var(--border-strong);
+      border-radius: 10px;
+      padding: 8px 13px;
+      min-height: 40px;
+    }
+
+    /* ================= ACTION TOOLBAR (FILTER + ADD BUTTON) ================= */
+    .QuickActionStrip {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .period-picker {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      background: var(--surface);
+      padding: 8px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .period-picker label {
+      font-family: var(--font-heading);
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    /* ================= DRAWER CARDS ================= */
+    .drawer-card {
+      background: var(--surface);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 22px 24px;
+      display: none;
+    }
+
+    .drawer-card.open {
+      display: block;
+    }
+
+    .drawer-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 18px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .drawer-header h3 {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    /* Easy Type Selector Tiles in Add Form */
+    .type-tiles {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .type-tile {
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 2px solid var(--border);
+      background: var(--surface-alt);
+      cursor: pointer;
+      text-align: left;
+      font-family: var(--font-heading);
+      transition: all 0.15s ease;
+    }
+
+    .type-tile strong {
+      display: block;
+      font-size: 14.5px;
+      color: var(--ink);
+    }
+
+    .type-tile span {
+      font-size: 12.5px;
+      color: var(--muted);
+      font-family: var(--font-body);
+    }
+
+    .type-tile.active-inc {
+      background: var(--inc-bg);
+      border-color: #10b981;
+    }
+
+    .type-tile.active-inc strong { color: var(--inc-head); }
+
+    .type-tile.active-exp {
+      background: var(--exp-bg);
+      border-color: #f59e0b;
+    }
+
+    .type-tile.active-exp strong { color: var(--exp-head); }
+
+    /* Quick Preset Chips */
+    .preset-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .preset-chip {
+      font-family: var(--font-heading);
+      font-size: 13px;
+      font-weight: 500;
+      padding: 5px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--border-strong);
+      background: var(--surface-alt);
+      color: var(--ink-secondary);
+      cursor: pointer;
+      transition: background 0.15s ease, border-color 0.15s ease;
+    }
+
+    .preset-chip:hover {
+      background: var(--brand-soft);
+      border-color: var(--brand);
+      color: var(--brand-dark);
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 14px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .field.span-2 {
+      grid-column: span 2;
+    }
+
+    .field label {
+      font-family: var(--font-heading);
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--ink-secondary);
+    }
+
+    /* Apps Script Code Box */
+    .script-steps {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      margin-top: 14px;
+    }
+
+    .code-pre {
+      background: #0f172a;
+      color: #e2e8f0;
+      padding: 14px;
+      border-radius: 10px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12.5px;
+      line-height: 1.5;
+      overflow-x: auto;
+      max-height: 210px;
+      margin: 10px 0 0;
+    }
+
+    /* ================= READABLE KPI SUMMARY CARDS ================= */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+      gap: 16px;
+    }
+
+    .kpi-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      padding: 20px 22px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .kpi-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 5px;
+      background: var(--border-strong);
+    }
+
+    .kpi-card.income::before { background: #10b981; }
+    .kpi-card.expense::before { background: #f59e0b; }
+    .kpi-card.profit::before { background: var(--brand); }
+
+    .kpi-label {
+      font-family: var(--font-heading);
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--ink-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .count-pill {
+      font-size: 12.5px;
+      font-weight: 600;
+      padding: 2px 9px;
+      border-radius: 999px;
+      background: var(--surface-alt);
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+
+    .kpi-value {
+      font-family: var(--font-heading);
+      font-size: 32px;
+      font-weight: 700;
+      margin: 10px 0 12px;
+      letter-spacing: -0.5px;
+      line-height: 1.15;
+    }
+
+    .kpi-card.income .kpi-value { color: var(--inc-head); }
+    .kpi-card.expense .kpi-value { color: var(--exp-head); }
+    .kpi-card.profit .kpi-value { color: var(--ink); }
+
+    .split-meter {
+      height: 8px;
+      background: #edf2ef;
+      border-radius: 999px;
+      overflow: hidden;
+      display: flex;
+      margin-bottom: 10px;
+    }
+
+    .split-seg-a { height: 100%; transition: width 0.3s ease; }
+    .split-seg-b { height: 100%; transition: width 0.3s ease; }
+
+    .kpi-breakdown {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      padding-top: 10px;
+      border-top: 1px dashed var(--border);
+      font-size: 14px;
+    }
+
+    .kpi-breakdown div span {
+      display: block;
+      font-size: 12.5px;
+      color: var(--muted);
+    }
+
+    .kpi-breakdown div strong {
+      font-family: var(--font-heading);
+      font-size: 15px;
+      color: var(--ink);
+    }
+
+    /* ================= VISUAL TAX DECISION CARD (40(8)) ================= */
+    .tax-decision-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      padding: 22px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .tax-top-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .tax-top-row h2 {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    .verdict-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-family: var(--font-heading);
+      font-size: 14px;
+      font-weight: 700;
+      background: var(--brand-soft);
+      color: var(--brand-dark);
+      border: 1px solid var(--brand-border);
+    }
+
+    .ratio-gauge-wrap {
+      background: var(--surface-alt);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+    }
+
+    .ratio-gauge-labels {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-size: 14px;
+      margin-bottom: 8px;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .ratio-track {
+      position: relative;
+      height: 14px;
+      background: #e2e8f0;
+      border-radius: 999px;
+      overflow: visible;
+    }
+
+    .ratio-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #10b981 0%, #f59e0b 100%);
+      max-width: 100%;
+      transition: width 0.3s ease;
+    }
+
+    .ratio-marker-60 {
+      position: absolute;
+      left: 60%;
+      top: -5px;
+      bottom: -5px;
+      width: 3px;
+      background: #1e293b;
+      border-radius: 2px;
+    }
+
+    .ratio-marker-label {
+      position: absolute;
+      left: 60%;
+      top: -24px;
+      transform: translateX(-50%);
+      font-family: var(--font-heading);
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #1e293b;
+      background: #f1f5f9;
+      padding: 1px 6px;
+      border-radius: 4px;
+      border: 1px solid #cbd5e1;
+      white-space: nowrap;
+    }
+
+    .tax-compare-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .tax-option {
+      padding: 16px 18px;
+      border-radius: 14px;
+      border: 2px solid var(--border);
+      background: var(--surface-alt);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .tax-option.recommended {
+      background: #ecfdf5;
+      border-color: #10b981;
+    }
+
+    .tax-option-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-family: var(--font-heading);
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    .rec-chip {
+      font-size: 12px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 999px;
+      background: var(--brand);
+      color: #ffffff;
+    }
+
+    .tax-option-val {
+      font-family: var(--font-heading);
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--brand-dark);
+    }
+
+    .tax-option-caption {
+      font-size: 14px;
+      color: var(--ink-secondary);
+    }
+
+    /* ================= LEDGER TABLE (EASY TO READ) ================= */
+    .ledger-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .ledger-toolbar {
+      padding: 20px 22px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .ledger-title-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .ledger-filters {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .filter-group-left,
+    .filter-group-right {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .segmented {
+      display: inline-flex;
+      background: var(--surface-alt);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 3px;
+      gap: 3px;
+    }
+
+    .seg-btn {
+      font-family: var(--font-heading);
+      font-size: 13.5px;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      transition: background 0.15s ease, color 0.15s ease;
+    }
+
+    .seg-btn.active {
+      background: var(--surface);
+      color: var(--ink);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.09);
+    }
+
+    .table-scroll {
+      width: 100%;
+      overflow-x: auto;
+      max-height: 620px;
+      overflow-y: auto;
+    }
+
+    table.ledger-table {
+      width: 100%;
+      min-width: 1080px;
+      border-collapse: separate;
+      border-spacing: 0;
+      font-size: 15px;
+    }
+
+    .ledger-table thead {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+    }
+
+    .ledger-table thead tr.group-row th {
+      font-family: var(--font-heading);
+      font-size: 13.5px;
+      font-weight: 700;
+      padding: 10px 14px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.22);
+    }
+
+    .th-group-meta { background: #1e293b; color: #f8fafc; text-align: left; }
+    .th-group-inc { background: var(--inc-head); color: #ffffff; text-align: center; border-left: 2px solid #ffffff; }
+    .th-group-exp { background: var(--exp-head); color: #ffffff; text-align: center; border-left: 2px solid #ffffff; }
+    .th-group-note { background: #334155; color: #f8fafc; text-align: left; border-left: 2px solid #ffffff; }
+
+    .ledger-table thead tr.col-row th {
+      font-family: var(--font-heading);
+      font-size: 13.5px;
+      font-weight: 700;
+      padding: 11px 14px;
+      border-bottom: 2px solid var(--border-strong);
+      white-space: nowrap;
+    }
+
+    .th-meta { background: #f1f5f9; color: #1e293b; text-align: left; }
+    .th-inc { background: #dcfce7; color: var(--inc-head); text-align: right; }
+    .th-inc-total { background: #bbf7d0; color: #064e3b; text-align: right; }
+    .th-exp { background: #ffedd5; color: var(--exp-head); text-align: right; }
+    .th-exp-total { background: #fed7aa; color: #7c2d12; text-align: right; }
+    .th-note { background: #f1f5f9; color: #334155; text-align: left; }
+
+    .ledger-table tbody tr td {
+      padding: 13px 14px;
+      border-bottom: 1px solid #e6ece9;
+      vertical-align: middle;
+    }
+
+    .ledger-table tbody tr:nth-child(odd) td.col-meta { background: #ffffff; }
+    .ledger-table tbody tr:nth-child(odd) td.col-inc { background: var(--inc-bg); }
+    .ledger-table tbody tr:nth-child(odd) td.col-inc-total { background: var(--inc-total-bg); }
+    .ledger-table tbody tr:nth-child(odd) td.col-exp { background: var(--exp-bg); }
+    .ledger-table tbody tr:nth-child(odd) td.col-exp-total { background: var(--exp-total-bg); }
+    .ledger-table tbody tr:nth-child(odd) td.col-note { background: #ffffff; }
+
+    .ledger-table tbody tr:nth-child(even) td.col-meta { background: #f8fafc; }
+    .ledger-table tbody tr:nth-child(even) td.col-inc { background: var(--inc-bg-alt); }
+    .ledger-table tbody tr:nth-child(even) td.col-inc-total { background: var(--inc-total-alt); }
+    .ledger-table tbody tr:nth-child(even) td.col-exp { background: var(--exp-bg-alt); }
+    .ledger-table tbody tr:nth-child(even) td.col-exp-total { background: var(--exp-total-alt); }
+    .ledger-table tbody tr:nth-child(even) td.col-note { background: #f8fafc; }
+
+    .ledger-table tbody tr:hover td {
+      filter: brightness(0.965);
+    }
+
+    .col-inc, .col-inc-total, .col-exp, .col-exp-total {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+      font-size: 15.5px;
+    }
+
+    .col-inc { border-left: 1px solid #e0f3e8; color: #0f5132; font-weight: 500; }
+    .col-inc-total {
+      font-weight: 700;
+      color: var(--inc-ink);
+      border-left: 1px solid #bbf7d0;
+      border-right: 2px solid #cbd5e1;
+    }
+
+    .col-exp { border-left: 1px solid #fae5cd; color: #7c2d12; font-weight: 500; }
+    .col-exp-total {
+      font-weight: 700;
+      color: var(--exp-ink);
+      border-left: 1px solid #fed7aa;
+      border-right: 2px solid #cbd5e1;
+    }
+
+    .zero-dash {
+      color: #b0bec5 !important;
+      font-weight: 400 !important;
+    }
+
+    .doc-badge {
+      display: inline-block;
+      font-family: var(--font-heading);
+      font-size: 12.5px;
+      font-weight: 600;
+      padding: 3px 9px;
+      border-radius: 7px;
+      background: #eef2f6;
+      color: #334155;
+      white-space: nowrap;
+    }
+
+    .doc-badge.pos { background: #e0f2fe; color: #0369a1; }
+    .doc-badge.ledger { background: #dcfce7; color: #166534; }
+
+    .source-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 13px;
+      padding: 3px 10px;
+      border-radius: 999px;
+      background: #f1f5f9;
+      color: #334155;
+    }
+
+    .ledger-table tfoot tr td {
+      font-family: var(--font-heading);
+      font-weight: 700;
+      font-size: 15.5px;
+      padding: 15px 14px;
+      border-top: 2px solid #334155;
+      font-variant-numeric: tabular-nums;
+      position: sticky;
+      bottom: 0;
+      z-index: 4;
+    }
+
+    .tfoot-meta { background: #f1f5f9; color: #0f172a; }
+    .tfoot-inc { background: #dcfce7; color: var(--inc-head); text-align: right; }
+    .tfoot-inc-total { background: #bbf7d0; color: #064e3b; text-align: right; border-right: 2px solid #94a3b8; }
+    .tfoot-exp { background: #ffedd5; color: var(--exp-head); text-align: right; }
+    .tfoot-exp-total { background: #fed7aa; color: #7c2d12; text-align: right; border-right: 2px solid #94a3b8; }
+
+    /* ================= CHARTS GRID ================= */
+    .charts-grid {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr;
+      gap: 16px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      padding: 20px 22px;
+    }
+
+    .card-head {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .card-title { font-size: 17px; font-weight: 700; color: var(--ink); }
+    .card-subtitle { font-size: 13.5px; color: var(--muted); margin-top: 2px; }
+
+    .chart-box {
+      position: relative;
+      height: 260px;
+      width: 100%;
+    }
+
+    .empty-state {
+      padding: 48px 24px;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    .empty-state h4 {
+      font-size: 17px;
+      color: var(--ink-secondary);
+      margin-bottom: 6px;
+    }
+
+    .empty-state p {
+      margin: 0 auto 16px;
+      max-width: 540px;
+      font-size: 14.5px;
+    }
+
+    .preview-box {
+      margin-top: 14px;
+      padding: 12px;
+      background: var(--surface-alt);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      overflow-x: auto;
+    }
+
+    .fallback-bars { display: flex; flex-direction: column; gap: 10px; padding-top: 8px; }
+    .fallback-row { display: flex; flex-direction: column; gap: 4px; font-size: 13.5px; }
+    .fallback-track { height: 10px; background: #edf2ef; border-radius: 999px; overflow: hidden; }
+    .fallback-fill { height: 100%; border-radius: 999px; }
+
+    @media (max-width: 1024px) {
+      .tax-compare-grid { grid-template-columns: 1fr; }
+      .charts-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 640px) {
+      .topbar-inner, .container { padding-left: 14px; padding-right: 14px; }
+      .field.span-2 { grid-column: span 1; }
+      .kpi-value { font-size: 26px; }
+      .brand-text h1 { font-size: 20px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Hidden File Input for logo.png -->
+  <input type="file" id="logoFileInput" accept="image/png,image/*" style="display:none;" aria-label="เลือกไฟล์โลโก้แม่สวิง logo.png">
+
+  <!-- Header with Logo.png Support -->
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand-identity">
+        <div id="logoSlot" class="logo-slot" role="button" tabindex="0" title="คลิกหรือลากไฟล์ logo.png มาวางเพื่อใส่โลโก้ร้านแม่สวิง" aria-label="ใส่โลโก้แม่สวิง logo.png">
+          <img id="brandLogoImg" class="logo-img" alt="โลโก้ร้านกระยาสารทแม่สวิง">
+          <div class="logo-fallback">
+            <span class="logo-fallback-initials">มส</span>
+            <span class="logo-fallback-hint">logo.png</span>
+          </div>
+          <div class="logo-hover-tip">ใส่โลโก้<br>logo.png</div>
+        </div>
+
+        <div class="brand-text">
+          <h1>สมุดรายรับ-รายจ่าย ร้านกระยาสารทแม่สวิง</h1>
+          <div class="brand-meta">
+            <span>ผู้ประกอบการ: นายอธิปพัฒน์ ธนรัชต์กุลเจริญ</span>
+            <span>เลขผู้เสียภาษี: <strong class="num">1-6099-00423-79-1</strong></span>
+            <span>ตามเกณฑ์กรมสรรพากร (ฉบับที่ 161)</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="topbar-actions">
+        <button type="button" id="btnUploadLogo" class="top-btn" title="เลือกไฟล์ logo.png จากเครื่อง">
+          <span id="btnUploadLogoLabel">ใส่โลโก้ (logo.png)</span>
+        </button>
+        <button type="button" id="btnClearLogo" class="top-btn" style="display:none;" title="นำโลโก้ออก">
+          <span>ลบโลโก้</span>
+        </button>
+        <a id="topLedgerSheetLink" class="ext-link" href="#" target="_blank" rel="noopener">
+          <span>เปิดชีตสมุดรายรับ-รายจ่าย</span>
+          <span aria-hidden="true">↗</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <!-- 2-Way Auto-Link & Sheet Sync Hub -->
+    <section class="sync-hub" aria-label="สถานะการเชื่อมลิงก์และอัปเดตลง Google Sheets อัตโนมัติ">
+      <div class="pipeline-nodes">
+        <span id="posSyncPill" class="pipe-step loading">
+          <span class="status-dot"></span>
+          <span id="posSyncText">1. ดึงข้อมูลจากชีต: กำลังเชื่อมต่อ...</span>
+        </span>
+        <span class="pipe-arrow" aria-hidden="true">→</span>
+        <span id="ledgerSyncPill" class="pipe-step ok">
+          <span class="status-dot"></span>
+          <span id="ledgerSyncText">2. อัปเดตอัตโนมัติ (Web App): เชื่อมต่อพร้อมใช้งาน</span>
+        </span>
+      </div>
+
+      <div class="sync-controls">
+        <label class="auto-toggle" title="ดึงข้อมูลจากชีตทุก 30 วินาที และบันทึกข้อมูลใหม่ลงชีตให้อัตโนมัติ">
+          <input type="checkbox" id="autoSyncToggle" checked>
+          <span>ดึง &amp; อัปเดตข้อมูลอัตโนมัติ (ทุก 30 วินาที)</span>
+        </label>
+
+        <button type="button" id="btnSyncAllNow" class="btn btn-soft">
+          <span>ดึงข้อมูล &amp; ซิงก์เดี๋ยวนี้</span>
+        </button>
+
+        <button type="button" id="btnToggleSettings" class="btn btn-secondary">
+          <span>ตั้งค่าการเชื่อมต่อชีต</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- Collapsible Drawer 1: Auto-Link & Google Sheets Bridge Settings -->
+    <section id="settingsDrawer" class="drawer-card" aria-label="ตั้งค่าการลิงก์และอัปเดตลง Google Sheets อัตโนมัติ">
+      <div class="drawer-header">
+        <div>
+          <h3>ตั้งค่าการเชื่อมต่อ "สมุดรายรับ-รายจ่าย ร้านกระยาสารทแม่สวิง (ตามเกณฑ์สรรพากร)"</h3>
+          <p style="margin:4px 0 0;font-size:14px;color:var(--muted);">เชื่อมลิงก์ Google Sheets และ Apps Script Web App สำหรับดึงข้อมูลและอัปเดตข้อมูลแบบอัตโนมัติ</p>
+        </div>
+        <button type="button" id="btnCloseSettings" class="btn btn-secondary">ปิดหน้าต่าง</button>
+      </div>
+
+      <div class="form-grid">
+        <div class="field span-2">
+          <label for="sheetUrlInput">1. ลิงก์ Google Sheets สมุดรายรับ-รายจ่าย (สำหรับดึงข้อมูล)</label>
+          <input type="url" id="sheetUrlInput" class="input">
+        </div>
+        <div class="field">
+          <label for="defaultPayChannel">ช่องทางรับเงินเริ่มต้น (กรณีไม่ระบุ)</label>
+          <select id="defaultPayChannel" class="select">
+            <option value="cash">รายรับ: เงินสดหน้าร้าน</option>
+            <option value="transfer">รายรับ: โอนเข้าบัญชีร้านแม่สวิง</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="syncWriteMode">โหมดการเขียนลงแท็บ "สมุดรายรับ-รายจ่าย"</label>
+          <select id="syncWriteMode" class="select">
+            <option value="upsert">เพิ่มเฉพาะรายการใหม่ + อัปเดตเลขเอกสารเดิม (ไม่ทับรายการในชีต)</option>
+            <option value="replace">จัดเรียงและเขียนตารางใหม่ทั้งหมด</option>
+          </select>
+        </div>
+
+        <div class="field span-2">
+          <label for="appsScriptUrlInput">2. ลิงก์ Google Apps Script Web App (สำหรับดึงและเขียนอัปเดตลงชีตอัตโนมัติ)</label>
+          <input type="url" id="appsScriptUrlInput" class="input" value="https://script.google.com/macros/s/AKfycbxSJfJx9b5qousEQXiHTvxAXTYxeDD_r7GTEQhWyfEa51VVw3TfXM8suyrrueuIBZJMJQ/exec">
+        </div>
+
+        <div class="field" style="justify-content:flex-end;grid-column:span 2;">
+          <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;">
+            <button type="button" id="btnResetDefaults" class="btn btn-secondary">คืนค่าลิงก์เริ่มต้น</button>
+            <button type="button" id="btnSaveAndSync" class="btn btn-primary">บันทึกและซิงก์ข้อมูลทันที</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="syncFeedbackBanner" style="margin-top:12px;padding:10px 14px;border-radius:10px;font-size:14px;display:none;"></div>
+
+      <!-- Apps Script Code Reference -->
+      <div class="script-steps">
+        <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;">
+          <div>
+            <strong class="heading-font" style="font-size:14.5px;color:var(--ink);">โค้ด Google Apps Script สำหรับชีต "สมุดรายรับ-รายจ่าย ร้านกระยาสารทแม่สวิง"</strong>
+            <div style="font-size:13.5px;color:var(--ink-secondary);margin-top:4px;">
+              ลิงก์ Web App ของคุณถูกตั้งค่าไว้เรียบร้อยแล้ว หากต้องการอัปเดตสคริปต์ในอนาคต สามารถคัดลอกโค้ดมาตรฐานด้านล่างไปวางใน <strong>ส่วนขยาย &gt; Apps Script</strong> ได้ทันที
+            </div>
+          </div>
+          <button type="button" id="btnCopyAppsScript" class="btn btn-soft">คัดลอกโค้ด Apps Script</button>
+        </div>
+        <pre id="appsScriptCodeBlock" class="code-pre"></pre>
+      </div>
+
+      <details style="margin-top:14px;">
+        <summary class="heading-font" style="cursor:pointer;font-size:13.5px;font-weight:600;color:var(--brand-dark);">ตัวเลือกเสริม: ตรวจสอบตัวอย่างข้อมูลดิบที่ดึงจากชีต หรือวางข้อมูลด้วยตนเอง</summary>
+        <div style="margin-top:12px;display:flex;flex-direction:column;gap:8px;">
+          <textarea id="manualCsvPaste" class="input" rows="3" placeholder="หรือคัดลอกตารางจาก Google Sheets แล้ววาง (Ctrl+V) ที่นี่เพื่อแปลงเข้าระบบทันที"></textarea>
+          <div>
+            <button type="button" id="btnParsePasted" class="btn btn-secondary">นำเข้าข้อมูลที่วาง</button>
+          </div>
+        </div>
+        <div id="rawPreviewContainer" class="preview-box" style="display:none;"></div>
+      </details>
+    </section>
+
+    <!-- Period Filter & Quick Add Action Strip -->
+    <div class="QuickActionStrip">
+      <div class="period-picker">
+        <label for="monthFilter">งวดเดือนที่แสดงผล:</label>
+        <select id="monthFilter" class="select" aria-label="กรองตามเดือน">
+          <option value="ALL">ทั้งหมดทุกเดือน</option>
+        </select>
+        <span id="periodSummaryHint" style="font-size:13.5px;color:var(--muted);">สรุปข้อมูลทุกงวดรวมกัน</span>
+      </div>
+
+      <div style="display:flex;flex-wrap:wrap;gap:10px;">
+        <button type="button" id="btnPushLedgerTop" class="btn btn-secondary">
+          <span id="btnPushLedgerTopLabel">ส่งรายการใหม่ลงชีตเดี๋ยวนี้</span>
+        </button>
+        <button type="button" id="btnToggleAddForm" class="btn btn-primary">
+          <span>+ บันทึกรายรับ / รายจ่ายใหม่</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Collapsible Drawer 2: Easy Quick-Tap Income/Expense Entry -->
+    <section id="addEntryDrawer" class="drawer-card" aria-label="บันทึกรายรับและรายจ่ายใหม่">
+      <div class="drawer-header">
+        <div>
+          <h3>บันทึกรายรับ - รายจ่ายร้านแม่สวิง (อัปเดตลงชีตอัตโนมัติ)</h3>
+          <p style="margin:3px 0 0;font-size:14px;color:var(--muted);">เมื่อกดบันทึก ระบบจะเพิ่มรายการลงตารางและส่งข้อมูลไปบันทึกต่อท้ายในชีตสมุดรายรับ-รายจ่ายให้อัตโนมัติ</p>
+        </div>
+        <button type="button" id="btnCloseAddForm" class="btn btn-secondary">ปิดหน้าต่าง</button>
+      </div>
+
+      <form id="entryForm" novalidate>
+        <input type="hidden" id="inType" value="exp_mat">
+
+        <!-- Visual Category Tiles -->
+        <div class="type-tiles" role="radiogroup" aria-label="เลือกประเภทรายการ">
+          <button type="button" class="type-tile active-exp" data-typeval="exp_mat">
+            <strong>🟠 รายจ่าย: ค่าวัตถุดิบ/สินค้า</strong>
+            <span>น้ำตาล มะพร้าว ถั่ว แป้ง กล่องขนม</span>
+          </button>
+          <button type="button" class="type-tile" data-typeval="exp_oth">
+            <strong>🟠 รายจ่าย: ค่าใช้จ่ายอื่นๆ ในร้าน</strong>
+            <span>ค่าแก๊ส ค่าน้ำ ค่าไฟ ค่าขนส่ง</span>
+          </button>
+          <button type="button" class="type-tile" data-typeval="inc_cash">
+            <strong>🟢 รายรับ: ขายเงินสด</strong>
+            <span>รับเงินสดหน้าร้านแม่สวิง</span>
+          </button>
+          <button type="button" class="type-tile" data-typeval="inc_trf">
+            <strong>🟢 รายรับ: โอนเข้าบัญชีร้าน</strong>
+            <span>สแกน QR / โอนเข้าบัญชีกระยาสารทแม่สวิง</span>
+          </button>
+        </div>
+
+        <!-- 1-Tap Quick Fill Chips -->
+        <div class="preset-bar" id="presetChipsBar"></div>
+
+        <div class="form-grid">
+          <div class="field">
+            <label for="inDate">วันที่ทำรายการ *</label>
+            <input type="date" id="inDate" class="input" required>
+          </div>
+          <div class="field">
+            <label for="inAmount">จำนวนเงิน (บาท) *</label>
+            <input type="number" id="inAmount" class="input num" step="0.01" min="0.01" placeholder="ระบุจำนวนเงิน เช่น 1450" required>
+          </div>
+          <div class="field span-2">
+            <label for="inDesc">รายละเอียดรายการ *</label>
+            <input type="text" id="inDesc" class="input" placeholder="เช่น ซื้อน้ำตาลปี๊บ มะพร้าว และถั่วลิสง (ตลาดสด)" required>
+          </div>
+          <div class="field">
+            <label for="inEvidence">หลักฐานประกอบทางภาษี</label>
+            <select id="inEvidence" class="select">
+              <option value="ใบสำคัญรับเงิน + สำเนาบัตรผู้ขาย + สลิปโอนเงิน">ใบสำคัญรับเงิน + สำเนาบัตรแม่ค้า + สลิป</option>
+              <option value="ใบเสร็จรับเงิน / บิลเงินสดระบุชื่อร้าน">ใบเสร็จรับเงิน / บิลเงินสดระบุชื่อร้าน</option>
+              <option value="ใบกำกับภาษีเต็มรูปแบบ">ใบกำกับภาษีเต็มรูปแบบ</option>
+              <option value="คำสั่งซื้อออนไลน์ + สลิปโอนเงิน">คำสั่งซื้อออนไลน์ + สลิปโอนเงิน</option>
+              <option value="สรุปยอดขายรายวัน / สเตทเมนต์บัญชีร้าน">สรุปยอดขายรายวัน / สเตทเมนต์บัญชีร้าน</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="inDocNo">เลขที่เอกสาร (เว้นว่างให้รันอัตโนมัติได้)</label>
+            <input type="text" id="inDocNo" class="input" placeholder="สร้างให้อัตโนมัติ เช่น PV-6911-001">
+          </div>
+        </div>
+
+        <div style="margin-top:16px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;">
+          <div id="formErrorMsg" style="color:var(--danger-ink);font-size:14px;font-weight:600;display:none;"></div>
+          <button type="submit" class="btn btn-primary" style="margin-left:auto;padding:10px 24px;font-size:15px;">
+            บันทึกและอัปเดตลง Google Sheets
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <!-- Easy-to-Read KPI Summary Cards -->
+    <section class="kpi-grid" aria-label="สรุปผลรายรับ รายจ่าย และกำไรสุทธิ">
+      <!-- Card 1: Total Income -->
+      <article class="kpi-card income">
+        <div>
+          <div class="kpi-label">
+            <span>🟢 รวมรายรับทั้งหมด</span>
+            <span id="kpiIncCount" class="count-pill">0 รายการ</span>
+          </div>
+          <div id="kpiTotalIncome" class="kpi-value num">฿0.00</div>
+          <div class="split-meter" aria-hidden="true">
+            <div id="barCashShare" class="split-seg-a" style="width:50%;background:#10b981;"></div>
+            <div id="barTrfShare" class="split-seg-b" style="width:50%;background:#047857;"></div>
+          </div>
+        </div>
+        <div class="kpi-breakdown num">
+          <div>
+            <span>รับเงินสดหน้าร้าน</span>
+            <strong id="kpiCashIncome">฿0.00</strong>
+          </div>
+          <div>
+            <span>โอนเข้าบัญชีร้าน</span>
+            <strong id="kpiTransferIncome">฿0.00</strong>
+          </div>
+        </div>
+      </article>
+
+      <!-- Card 2: Total Expense -->
+      <article class="kpi-card expense">
+        <div>
+          <div class="kpi-label">
+            <span>🟠 รวมรายจ่ายจริงทั้งหมด</span>
+            <span id="kpiExpCount" class="count-pill">0 รายการ</span>
+          </div>
+          <div id="kpiTotalExpense" class="kpi-value num">฿0.00</div>
+          <div class="split-meter" aria-hidden="true">
+            <div id="barMatShare" class="split-seg-a" style="width:70%;background:#f97316;"></div>
+            <div id="barOthShare" class="split-seg-b" style="width:30%;background:#d97706;"></div>
+          </div>
+        </div>
+        <div class="kpi-breakdown num">
+          <div>
+            <span>ค่าวัตถุดิบ / สินค้า</span>
+            <strong id="kpiMatExpense">฿0.00</strong>
+          </div>
+          <div>
+            <span>ค่าใช้จ่ายอื่นๆ ในร้าน</span>
+            <strong id="kpiOtherExpense">฿0.00</strong>
+          </div>
+        </div>
+      </article>
+
+      <!-- Card 3: Net Profit & VAT Ceiling -->
+      <article class="kpi-card profit">
+        <div>
+          <div class="kpi-label">
+            <span>กำไรสุทธิคงเหลือ (รายรับ - รายจ่าย)</span>
+            <span id="kpiProfitMargin" class="count-pill num">กำไร 0.0%</span>
+          </div>
+          <div id="kpiNetProfit" class="kpi-value num">฿0.00</div>
+          <div class="split-meter" aria-hidden="true">
+            <div id="barVatProgress" class="split-seg-a" style="width:0%;background:#2563eb;"></div>
+          </div>
+        </div>
+        <div class="kpi-breakdown num">
+          <div>
+            <span>สัดส่วนต้นทุนจริง</span>
+            <strong id="kpiCostRatio">0.00%</strong>
+          </div>
+          <div>
+            <span>คงเหลือเพดานจด VAT 1.8 ล้าน</span>
+            <strong id="kpiVatTrack">฿1,800,000</strong>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <!-- Clear Visual Tax 40(8) Decision Card -->
+    <section class="tax-decision-card" aria-label="สรุปเปรียบเทียบวิธีหักค่าใช้จ่ายภาษี มาตรา 40(8)">
+      <div class="tax-top-row">
+        <div>
+          <h2>สรุปเทียบความคุ้มค่าทางภาษี (มาตรา 40(8) ร้านกระยาสารทแม่สวิง)</h2>
+          <p id="taxAdviceSummary" style="margin:3px 0 0;font-size:14.5px;color:var(--ink-secondary);">
+            ระบบเทียบต้นทุนจริงที่มีบิลกับเกณฑ์หักเหมา 60% ให้อัตโนมัติ เพื่อเลือกวิธีที่ประหยัดภาษีที่สุด
+          </p>
+        </div>
+        <span id="taxVerdictBadge" class="verdict-pill">รอข้อมูลรายรับ-รายจ่าย</span>
+      </div>
+
+      <!-- Visual Cost Ratio vs 60% Flat Rate Gauge -->
+      <div class="ratio-gauge-wrap">
+        <div class="ratio-gauge-labels">
+          <span>สัดส่วนต้นทุนจริงเทียบยอดขายตอนนี้: <strong id="gaugeRatioLabel" class="num" style="color:var(--ink);font-size:16px;">0.0%</strong></span>
+          <span style="color:var(--muted);font-size:13px;">ถ้าน้อยกว่า 60% เลือก "หักเหมา" คุ้มกว่า · ถ้าเกิน 60% (และมีบิลครบ) เลือก "หักตามจริง" คุ้มกว่า</span>
+        </div>
+        <div class="ratio-track">
+          <div id="gaugeRatioFill" class="ratio-fill" style="width:0%;"></div>
+          <div class="ratio-marker-60"></div>
+          <div class="ratio-marker-label">เกณฑ์หักเหมา 60%</div>
+        </div>
+      </div>
+
+      <div class="tax-compare-grid">
+        <div id="taxBoxFlat" class="tax-option">
+          <div class="tax-option-head">
+            <span>วิธีที่ 1: หักค่าใช้จ่ายแบบเหมา 60% (ไม่ต้องใช้บิลยื่น)</span>
+            <span id="chipFlat" class="rec-chip" style="display:none;">คุ้มที่สุดตอนนี้</span>
+          </div>
+          <div id="valFlatDeduct" class="tax-option-val num">หักต้นทุนได้ ฿0.00</div>
+          <div class="tax-option-caption num">เหลือเงินได้สุทธินำไปคิดภาษี (40%): <strong id="valFlatNet">฿0.00</strong></div>
+        </div>
+
+        <div id="taxBoxActual" class="tax-option">
+          <div class="tax-option-head">
+            <span>วิธีที่ 2: หักค่าใช้จ่ายตามจริง (ต้องมีใบเสร็จ/ใบสำคัญรับเงินครบ)</span>
+            <span id="chipActual" class="rec-chip" style="display:none;">คุ้มที่สุดตอนนี้</span>
+          </div>
+          <div id="valActualDeduct" class="tax-option-val num">หักต้นทุนได้ ฿0.00</div>
+          <div class="tax-option-caption num">เหลือเงินได้สุทธินำไปคิดภาษี: <strong id="valActualNet">฿0.00</strong></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Easy-to-Read Revenue Department Ledger Table -->
+    <section class="ledger-card" aria-label="ตารางสมุดรายรับ-รายจ่ายตามเกณฑ์กรมสรรพากร">
+      <div class="ledger-toolbar">
+        <div class="ledger-title-row">
+          <div>
+            <h2 class="card-title" style="font-size:19px;">สมุดรายรับ-รายจ่าย (มาตรฐานกรมสรรพากร ฉบับที่ 161)</h2>
+            <p class="card-subtitle">ดึงข้อมูลสดจากชีตสมุดรายรับ-รายจ่าย แยกสีรายรับ (เขียว) และรายจ่าย (ส้ม) อัตโนมัติ</p>
+          </div>
+
+          <div style="display:flex;flex-wrap:wrap;gap:8px;">
+            <button type="button" id="btnPushLedgerTable" class="btn btn-soft">
+              <span id="btnPushLedgerTableLabel">อัปเดตข้อมูลลง Google Sheets</span>
+            </button>
+            <button type="button" id="btnCopyTsv" class="btn btn-secondary">คัดลอกตารางวางใน Sheets</button>
+          </div>
+        </div>
+
+        <div class="ledger-filters">
+          <div class="filter-group-left">
+            <div class="segmented" role="group" aria-label="รูปแบบการแสดงผลรายการ">
+              <button type="button" class="seg-btn active" data-groupmode="raw">แสดงแยกรายบิล (ตามชีตจริง)</button>
+              <button type="button" class="seg-btn" data-groupmode="daily">รวมยอดขายรายวัน (อ่านง่าย)</button>
+            </div>
+
+            <div class="segmented" role="group" aria-label="กรองประเภทรายการ">
+              <button type="button" class="seg-btn active" data-txfilter="all">ทั้งหมด</button>
+              <button type="button" class="seg-btn" data-txfilter="income">เฉพาะรายรับ</button>
+              <button type="button" class="seg-btn" data-txfilter="expense">เฉพาะรายจ่าย</button>
+            </div>
+          </div>
+
+          <div class="filter-group-right">
+            <input type="search" id="searchInput" class="input" placeholder="ค้นหาวันที่ / รายการ / เลขเอกสาร..." aria-label="ค้นหารายการ" style="min-width:230px;">
+          </div>
+        </div>
+      </div>
+
+      <div class="table-scroll">
+        <table class="ledger-table">
+          <thead>
+            <tr class="group-row">
+              <th colspan="3" class="th-group-meta">ข้อมูลรายการและเอกสารอ้างอิง</th>
+              <th colspan="3" class="th-group-inc">🟢 ส่วนรายรับ (บาท)</th>
+              <th colspan="3" class="th-group-exp">🟠 ส่วนรายจ่าย (บาท)</th>
+              <th class="th-group-note">หลักฐานประกอบ / การจัดการ</th>
+            </tr>
+            <tr class="col-row">
+              <th class="th-meta" style="width:110px;">วัน/เดือน/ปี</th>
+              <th class="th-meta" style="width:140px;">เลขที่เอกสารอ้างอิง</th>
+              <th class="th-meta" style="min-width:250px;">รายการ (รายละเอียดการรับ-จ่าย)</th>
+              <th class="th-inc" style="width:115px;">เงินสด</th>
+              <th class="th-inc" style="width:125px;">โอนเข้าบัญชีร้าน</th>
+              <th class="th-inc-total" style="width:130px;">รวมรายรับ</th>
+              <th class="th-exp" style="width:130px;">ค่าวัตถุดิบ/สินค้า</th>
+              <th class="th-exp" style="width:120px;">ค่าใช้จ่ายอื่นๆ</th>
+              <th class="th-exp-total" style="width:130px;">รวมรายจ่าย</th>
+              <th class="th-note" style="min-width:200px;">หมายเหตุ (ประเภทหลักฐาน)</th>
+            </tr>
+          </thead>
+          <tbody id="ledgerTbody"></tbody>
+          <tfoot id="ledgerTfoot" style="display:none;">
+            <tr>
+              <td colspan="3" class="tfoot-meta" id="tfootLabel">รวมประจำงวด (0 รายการ)</td>
+              <td class="tfoot-inc" id="tfootCash">0.00</td>
+              <td class="tfoot-inc" id="tfootTransfer">0.00</td>
+              <td class="tfoot-inc-total" id="tfootIncTotal">0.00</td>
+              <td class="tfoot-exp" id="tfootMat">0.00</td>
+              <td class="tfoot-exp" id="tfootOther">0.00</td>
+              <td class="tfoot-exp-total" id="tfootExpTotal">0.00</td>
+              <td class="tfoot-meta" id="tfootNetSummary"></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <div id="emptyStateBox" class="empty-state" style="display:none;">
+        <h4 id="emptyStateTitle">ยังไม่มีรายการบัญชีในมุมมองนี้</h4>
+        <p id="emptyStateDesc">กดปุ่ม "+ บันทึกรายรับ / รายจ่ายใหม่" เพื่อเริ่มบันทึก หรือกดปุ่ม "ดึงข้อมูล &amp; ซิงก์เดี๋ยวนี้" ด้านบน</p>
+      </div>
+    </section>
+
+    <!-- Visual Charts Section -->
+    <section class="charts-grid" aria-label="กราฟสรุปแนวโน้มและสัดส่วนบัญชี">
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <h3 class="card-title">กราฟเปรียบเทียบรายรับ - รายจ่ายรายวัน</h3>
+            <p class="card-subtitle">ช่วยให้เห็นภาพรวมวันขายดีและวันที่มีการซื้อวัตถุดิบเข้าหน้าร้าน</p>
+          </div>
+        </div>
+        <div class="chart-box" id="trendChartWrap">
+          <canvas id="trendChart"></canvas>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <h3 class="card-title">สัดส่วนช่องทางรับเงิน &amp; หมวดรายจ่าย</h3>
+            <p class="card-subtitle">แยกยอดเงินสด เงินโอน ค่าวัตถุดิบ และค่าใช้จ่ายอื่นๆ ในร้าน</p>
+          </div>
+        </div>
+        <div class="chart-box" id="breakdownChartWrap">
+          <canvas id="breakdownChart"></canvas>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // Default Spreadsheet & Deployed Google Apps Script Web App Configuration
+      const LEDGER_SPREADSHEET_ID = ['1ba4AvL5lEH17XhCCQgVBIKwo1', 'DYP', 'DEq9E9EKp6U2c'].join('-');
+      const LEDGER_SHEET_GID = ['6455', '51615'].join('');
+      const LEDGER_SHEET_NAME = 'สมุดรายรับ-รายจ่าย';
+      const DEFAULT_SHEET_URL = `https://docs.google.com/spreadsheets/d/${LEDGER_SPREADSHEET_ID}/edit?usp=sharing`;
+      const DEFAULT_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxSJfJx9b5qousEQXiHTvxAXTYxeDD_r7GTEQhWyfEa51VVw3TfXM8suyrrueuIBZJMJQ/exec';
+
+      const THAI_MONTHS_SHORT = [
+        '', 'ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.',
+        'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'
+      ];
+
+      const THAI_MONTH_MAP = {
+        'ม.ค.': 1, 'มค': 1, 'มกราคม': 1, 'jan': 1, 'january': 1,
+        'ก.พ.': 2, 'กพ': 2, 'กุมภาพันธ์': 2, 'feb': 2, 'february': 2,
+        'มี.ค.': 3, 'มีค': 3, 'มีนาคม': 3, 'mar': 3, 'march': 3,
+        'เม.ย.': 4, 'เมย': 4, 'เมษายน': 4, 'apr': 4, 'april': 4,
+        'พ.ค.': 5, 'พค': 5, 'พฤษภาคม': 5, 'may': 5,
+        'มิ.ย.': 6, 'มิย': 6, 'มิถุนายน': 6, 'jun': 6, 'june': 6,
+        'ก.ค.': 7, 'กค': 7, 'กรกฎาคม': 7, 'jul': 7, 'july': 7,
+        'ส.ค.': 8, 'สค': 8, 'สิงหาคม': 8, 'aug': 8, 'august': 8,
+        'ก.ย.': 9, 'กย': 9, 'กันยายน': 9, 'sep': 9, 'september': 9,
+        'ต.ค.': 10, 'ตค': 10, 'ตุลาคม': 10, 'oct': 10, 'october': 10,
+        'พ.ย.': 11, 'พย': 11, 'พฤศจิกายน': 11, 'nov': 11, 'november': 11,
+        'ธ.ค.': 12, 'ธค': 12, 'ธันวาคม': 12, 'dec': 12, 'december': 12
+      };
+
+      const PRESETS_BY_TYPE = {
+        exp_mat: [
+          { label: 'น้ำตาลปี๊บ / มะพร้าว / ถั่วลิสง (ตลาดสด)', ev: 'ใบสำคัญรับเงิน + สำเนาบัตรผู้ขาย + สลิปโอนเงิน' },
+          { label: 'แป้งข้าวเหนียว / ไส้ขนมโมจิ-ไดฟูกุ', ev: 'ใบเสร็จรับเงิน / บิลเงินสดระบุชื่อร้าน' },
+          { label: 'กล่องขนม / ถุงบรรจุภัณฑ์ / สติกเกอร์', ev: 'ใบเสร็จรับเงิน / บิลเงินสดระบุชื่อร้าน' },
+          { label: 'สั่งซื้อวัตถุดิบเบเกอรี่ออนไลน์', ev: 'คำสั่งซื้อออนไลน์ + สลิปโอนเงิน' }
+        ],
+        exp_oth: [
+          { label: 'ค่าแก๊สหุงต้มสำหรับกวนกระยาสารท', ev: 'ใบเสร็จรับเงิน / บิลเงินสดระบุชื่อร้าน' },
+          { label: 'ค่าน้ำประปา / ค่าไฟฟ้าร้านแม่สวิง', ev: 'ใบกำกับภาษีเต็มรูปแบบ' },
+          { label: 'ค่าขนส่งพัสดุส่งขนมลูกค้า', ev: 'ใบเสร็จรับเงิน / บิลเงินสดระบุชื่อร้าน' }
+        ],
+        inc_cash: [
+          { label: 'ยอดขายหน้าร้านเงินสด (โมจิ ไดฟูกุ กระยาสารท)', ev: 'สรุปยอดขายรายวัน / สเตทเมนต์บัญชีร้าน' },
+          { label: 'ยอดขายงานออกบูธ / ตลาดนัด', ev: 'สรุปยอดขายรายวัน / สเตทเมนต์บัญชีร้าน' }
+        ],
+        inc_trf: [
+          { label: 'ยอดขายสแกนโอนเข้าบัญชีร้านแม่สวิง', ev: 'สรุปยอดขายรายวัน / สเตทเมนต์บัญชีร้าน' },
+          { label: 'ยอดขายสั่งทำขนมจัดเบรก / ของฝาก', ev: 'สรุปยอดขายรายวัน / สเตทเมนต์บัญชีร้าน' }
+        ]
+      };
+
+      const state = {
+        sheetUrl: DEFAULT_SHEET_URL,
+        appsScriptUrl: DEFAULT_APPS_SCRIPT_URL,
+        autoSync: true,
+        syncWriteMode: 'upsert',
+        rawGrid: [],
+        headers: [],
+        dataRows: [],
+        mapping: null,
+        sheetEntries: [],
+        manualEntries: [],
+        groupMode: 'raw',
+        txFilter: 'all',
+        monthFilter: 'ALL',
+        searchQuery: '',
+        defaultPayChannel: 'cash',
+        isSyncing: false
+      };
+
+      let trendChartInstance = null;
+      let breakdownChartInstance = null;
+      let autoSyncTimer = null;
+
+      // Formatting Helpers
+      const fmtMoney = new Intl.NumberFormat('th-TH', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+
+      function formatBaht(num) {
+        return '฿' + fmtMoney.format(Number(num) || 0);
+      }
+
+      function formatCellDisplay(num) {
+        const val = Number(num) || 0;
+        if (Math.abs(val) < 0.005) return '–';
+        return fmtMoney.format(val);
+      }
+
+      function formatCellExact(num) {
+        return fmtMoney.format(Number(num) || 0);
+      }
+
+      function escapeHtml(str) {
+        return String(str == null ? '' : str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      }
+
+      function parseThaiNumber(raw) {
+        if (typeof raw === 'number') return Number.isFinite(raw) ? raw : 0;
+        if (raw == null) return 0;
+        let s = String(raw).trim();
+        if (!s || s === '-' || s === '–' || s === '—') return 0;
+        let neg = false;
+        if (/^\(.*\)$/.test(s)) {
+          neg = true;
+          s = s.slice(1, -1);
+        }
+        s = s.replace(/[฿,\s]|บาท/g, '');
+        if (!/^[-+]?\d*\.?\d+$/.test(s)) return NaN;
+        const val = parseFloat(s);
+        if (!Number.isFinite(val)) return NaN;
+        return neg ? -val : val;
+      }
+
+      function parseSmartDate(raw) {
+        if (!raw) return null;
+        const s = String(raw).trim();
+        if (!s) return null;
+
+        // Handle Google Visualization Date(yyyy, m, d) format if returned
+        const gvizMatch = s.match(/Date\((\d{4}),\s*(\d{1,2}),\s*(\d{1,2})/i);
+        if (gvizMatch) {
+          const y = parseInt(gvizMatch[1], 10);
+          const m0 = parseInt(gvizMatch[2], 10) + 1;
+          const d0 = parseInt(gvizMatch[3], 10);
+          return buildDateObject(d0, m0, y);
+        }
+
+        const datePart = s.split(/\s+|T/)[0].trim();
+        let day = null, month = null, yearRaw = null;
+
+        let m = datePart.match(/^(\d{4})[\/\-\.](\d{1,2})[\/\-\.](\d{1,2})$/);
+        if (m) {
+          yearRaw = parseInt(m[1], 10);
+          month = parseInt(m[2], 10);
+          day = parseInt(m[3], 10);
+        }
+
+        if (!day) {
+          m = datePart.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})$/);
+          if (m) {
+            const p1 = parseInt(m[1], 10);
+            const p2 = parseInt(m[2], 10);
+            yearRaw = parseInt(m[3], 10);
+            if (p1 > 12) { day = p1; month = p2; }
+            else if (p2 > 12) { month = p1; day = p2; }
+            else { day = p1; month = p2; }
+          }
+        }
+
+        if (!day) {
+          const tokens = s.replace(/,/g, ' ').split(/\s+/);
+          if (tokens.length >= 2) {
+            const maybeDay = parseInt(tokens[0], 10);
+            const mKey = tokens[1].toLowerCase();
+            const matchedMonth = THAI_MONTH_MAP[mKey] || THAI_MONTH_MAP[mKey.replace(/\./g, '')];
+            if (maybeDay >= 1 && maybeDay <= 31 && matchedMonth) {
+              day = maybeDay;
+              month = matchedMonth;
+              yearRaw = (tokens[2] && /^\d{2,4}$/.test(tokens[2])) ? parseInt(tokens[2], 10) : 2569;
+            }
+          }
+        }
+
+        if (!day || !month || !yearRaw || month < 1 || month > 12 || day < 1 || day > 31) {
+          return null;
+        }
+
+        return buildDateObject(day, month, yearRaw);
+      }
+
+      function buildDateObject(day, month, yearRaw) {
+        let ceYear, beYear;
+        if (yearRaw >= 2400) {
+          beYear = yearRaw; ceYear = yearRaw - 543;
+        } else if (yearRaw >= 1900) {
+          ceYear = yearRaw; beYear = yearRaw + 543;
+        } else if (yearRaw >= 55 && yearRaw <= 99) {
+          beYear = 2500 + yearRaw; ceYear = beYear - 543;
+        } else {
+          ceYear = 2000 + yearRaw; beYear = ceYear + 543;
+        }
+
+        const dd = String(day).padStart(2, '0');
+        const mm = String(month).padStart(2, '0');
+        return {
+          sortKey: `${ceYear}-${mm}-${dd}`,
+          displayDate: `${dd}/${mm}/${beYear}`,
+          rawSheetDate: `${dd}/${mm}/${ceYear}`,
+          monthKey: `${beYear}-${mm}`,
+          monthLabel: `${THAI_MONTHS_SHORT[month]} ${beYear}`
+        };
+      }
+
+      function parseDelimitedText(text, delimiter) {
+        const rows = [];
+        let row = [];
+        let field = '';
+        let inQuotes = false;
+        const len = text.length;
+
+        for (let i = 0; i < len; i++) {
+          const ch = text[i];
+          const next = text[i + 1];
+          if (inQuotes) {
+            if (ch === '"' && next === '"') { field += '"'; i++; }
+            else if (ch === '"') { inQuotes = false; }
+            else { field += ch; }
+          } else {
+            if (ch === '"') { inQuotes = true; }
+            else if (ch === delimiter) { row.push(field.trim()); field = ''; }
+            else if (ch === '\r' && next === '\n') { row.push(field.trim()); rows.push(row); row = []; field = ''; i++; }
+            else if (ch === '\n' || ch === '\r') { row.push(field.trim()); rows.push(row); row = []; field = ''; }
+            else { field += ch; }
+          }
+        }
+        if (field.length > 0 || row.length > 0) {
+          row.push(field.trim());
+          rows.push(row);
+        }
+        return rows.filter(r => r.some(cell => cell !== ''));
+      }
+
+      // ================= LOGO.PNG HANDLER =================
+      function applyLogoDataUrl(dataUrl) {
+        const slot = document.getElementById('logoSlot');
+        const img = document.getElementById('brandLogoImg');
+        const clearBtn = document.getElementById('btnClearLogo');
+        const uploadLbl = document.getElementById('btnUploadLogoLabel');
+
+        if (dataUrl) {
+          img.src = dataUrl;
+          slot.classList.add('has-logo');
+          clearBtn.style.display = 'inline-flex';
+          uploadLbl.textContent = 'เปลี่ยนโลโก้ (logo.png)';
+        } else {
+          img.removeAttribute('src');
+          slot.classList.remove('has-logo');
+          clearBtn.style.display = 'none';
+          uploadLbl.textContent = 'ใส่โลโก้ (logo.png)';
+        }
+      }
+
+      function handleLogoFile(file) {
+        if (!file || !file.type.startsWith('image/')) return;
+        const reader = new FileReader();
+        reader.onload = function (ev) {
+          const dataUrl = ev.target.result;
+          applyLogoDataUrl(dataUrl);
+          try {
+            localStorage.setItem('maesawing_logo_dataurl_v1', dataUrl);
+          } catch (e) { /* ignore quota/sandbox errors */ }
+        };
+        reader.readAsDataURL(file);
+      }
+
+      function loadSavedLogo() {
+        try {
+          const saved = localStorage.getItem('maesawing_logo_dataurl_v1');
+          if (saved && saved.startsWith('data:image/')) {
+            applyLogoDataUrl(saved);
+          }
+        } catch (e) { /* ignore */ }
+      }
+
+      // ================= APPS SCRIPT BRIDGE GENERATOR =================
+      function buildAppsScriptSnippet() {
+        return [
+          `// โค้ดเชื่อมเว็บแอป <-> สมุดรายรับ-รายจ่าย ร้านกระยาสารทแม่สวิง อัตโนมัติ`,
+          `const SPREADSHEET_ID = '${LEDGER_SPREADSHEET_ID}';`,
+          `const SHEET_NAME = '${LEDGER_SHEET_NAME}';`,
+          ``,
+          `function doGet() {`,
+          `  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);`,
+          `  const sh = ss.getSheetByName(SHEET_NAME) || ss.getSheets()[0];`,
+          `  const rows = sh.getDataRange().getDisplayValues();`,
+          `  return ContentService.createTextOutput(JSON.stringify({ status: 'ok', rows: rows }))`,
+          `    .setMimeType(ContentService.MimeType.JSON);`,
+          `}`,
+          ``,
+          `function doPost(e) {`,
+          `  const payload = JSON.parse(e.postData.contents);`,
+          `  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);`,
+          `  const sh = ss.getSheetByName(SHEET_NAME) || ss.getSheets()[0];`,
+          `  const incoming = payload.rows || (payload.row ? [payload.row] : []);`,
+          `  const mode = payload.mode || 'upsert';`,
+          ``,
+          `  if (mode === 'replace') {`,
+          `    if (sh.getLastRow() > 1) sh.getRange(2, 1, sh.getLastRow() - 1, 10).clearContent();`,
+          `    if (incoming.length > 0) sh.getRange(2, 1, incoming.length, 10).setValues(incoming);`,
+          `  } else {`,
+          `    const existing = sh.getLastRow() > 1 ? sh.getRange(2, 1, sh.getLastRow() - 1, 10).getValues() : [];`,
+          `    const docMap = {};`,
+          `    existing.forEach((r, i) => { if (r[1]) docMap[String(r[1]).trim()] = i + 2; });`,
+          `    const toAppend = [];`,
+          `    incoming.forEach(r => {`,
+          `      const key = String(r[1] || '').trim();`,
+          `      if (key && docMap[key]) sh.getRange(docMap[key], 1, 1, 10).setValues([r]);`,
+          `      else toAppend.push(r);`,
+          `    });`,
+          `    if (toAppend.length > 0) sh.getRange(sh.getLastRow() + 1, 1, toAppend.length, 10).setValues(toAppend);`,
+          `  }`,
+          ``,
+          `  return ContentService.createTextOutput(JSON.stringify({ status: 'ok', count: incoming.length }))`,
+          `    .setMimeType(ContentService.MimeType.JSON);`,
+          `}`
+        ].join('\n');
+      }
+
+      // ================= GOOGLE SHEETS ENDPOINTS & PARSERS =================
+      function extractSpreadsheetId(rawUrl) {
+        const s = String(rawUrl || '').trim();
+        const m = s.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+        if (m && m[1] !== 'e') return m[1];
+        return LEDGER_SPREADSHEET_ID;
+      }
+
+      function buildCsvEndpoints(rawUrl) {
+        const sheetId = extractSpreadsheetId(rawUrl);
+        return [
+          `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(LEDGER_SHEET_NAME)}`,
+          `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&gid=${LEDGER_SHEET_GID}`,
+          `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${LEDGER_SHEET_GID}`,
+          `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv`
+        ];
+      }
+
+      // JSONP Fallback for file:// or strict CORS environments
+      function fetchSheetViaJsonp(rawUrl) {
+        return new Promise((resolve) => {
+          const sheetId = extractSpreadsheetId(rawUrl);
+          const cbName = '__maesawingGvizCb_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+          const script = document.createElement('script');
+          let settled = false;
+
+          const cleanup = () => {
+            if (script.parentNode) script.parentNode.removeChild(script);
+            try { delete window[cbName]; } catch (e) { window[cbName] = undefined; }
+          };
+
+          const timer = setTimeout(() => {
+            if (settled) return;
+            settled = true;
+            cleanup();
+            resolve(null);
+          }, 8000);
+
+          window[cbName] = function (resp) {
+            if (settled) return;
+            settled = true;
+            clearTimeout(timer);
+            cleanup();
+            try {
+              if (!resp || !resp.table) {
+                resolve(null);
+                return;
+              }
+              const cols = (resp.table.cols || []).map((c, idx) => (c && (c.label || c.id)) ? String(c.label || c.id).trim() : `คอลัมน์ ${idx + 1}`);
+              const rows = (resp.table.rows || []).map(r => {
+                const cells = (r && r.c) ? r.c : [];
+                return cols.map((_, cIdx) => {
+                  const cell = cells[cIdx];
+                  if (!cell) return '';
+                  if (cell.f != null && String(cell.f).trim() !== '') return String(cell.f).trim();
+                  if (cell.v != null) return String(cell.v).trim();
+                  return '';
+                });
+              });
+              const grid = [];
+              if (cols.some(c => c !== '')) grid.push(cols);
+              rows.forEach(r => {
+                if (r.some(c => c !== '')) grid.push(r);
+              });
+              resolve(grid.length > 0 ? grid : null);
+            } catch (err) {
+              resolve(null);
+            }
+          };
+
+          script.onerror = function () {
+            if (settled) return;
+            settled = true;
+            clearTimeout(timer);
+            cleanup();
+            resolve(null);
+          };
+
+          script.src = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json;responseHandler:${cbName}&sheet=${encodeURIComponent(LEDGER_SHEET_NAME)}&_ts=${Date.now()}`;
+          document.head.appendChild(script);
+        });
+      }
+
+      // Normalize various JSON shapes from Apps Script doGet
+      function normalizeAppsScriptResponseToGrid(json) {
+        if (!json) return null;
+        let rawList = null;
+        if (Array.isArray(json)) rawList = json;
+        else if (Array.isArray(json.rows)) rawList = json.rows;
+        else if (Array.isArray(json.data)) rawList = json.data;
+        else if (Array.isArray(json.values)) rawList = json.values;
+        else if (Array.isArray(json.items)) rawList = json.items;
+
+        if (!rawList || rawList.length === 0) return null;
+
+        // Case 1: 2D array of rows
+        if (Array.isArray(rawList[0])) {
+          return rawList.map(r => r.map(c => String(c == null ? '' : c).trim())).filter(r => r.some(c => c !== ''));
+        }
+
+        // Case 2: Array of objects
+        if (typeof rawList[0] === 'object' && rawList[0] !== null) {
+          const standardHeaders = [
+            'วัน/เดือน/ปี',
+            'เลขที่เอกสารอ้างอิง',
+            'รายการ (รายละเอียดการรับ-จ่าย)',
+            'รายรับ: เงินสด (บาท)',
+            'รายรับ: โอนเข้าบัญชีร้าน (บาท)',
+            'รวมรายรับ (บาท)',
+            'รายจ่าย: ค่าวัตถุดิบ/สินค้า (บาท)',
+            'รายจ่าย: ค่าใช้จ่ายอื่นๆ ในร้าน (บาท)',
+            'รวมรายจ่าย (บาท)',
+            'หมายเหตุ (ประเภทหลักฐานประกอบ)'
+          ];
+          const grid = [standardHeaders];
+          rawList.forEach(obj => {
+            const keys = Object.keys(obj);
+            if (keys.length === 0) return;
+            const d = obj.date || obj.displayDate || obj['วัน/เดือน/ปี'] || obj[keys[0]] || '';
+            const docNo = obj.docNo || obj.id || obj['เลขที่เอกสารอ้างอิง'] || obj['เลขที่เอกสาร'] || obj[keys[1]] || '';
+            const desc = obj.description || obj.desc || obj.item || obj['รายการ (รายละเอียดการรับ-จ่าย)'] || obj['รายการ'] || obj[keys[2]] || '';
+            const cash = obj.incomeCash ?? obj.cash ?? obj['รายรับ: เงินสด (บาท)'] ?? obj['เงินสด'] ?? 0;
+            const trf = obj.incomeTransfer ?? obj.transfer ?? obj['รายรับ: โอนเข้าบัญชีร้าน (บาท)'] ?? obj['โอนเข้าบัญชีร้าน'] ?? 0;
+            const totInc = obj.totalIncome ?? obj['รวมรายรับ (บาท)'] ?? obj['รวมรายรับ'] ?? ((Number(cash) || 0) + (Number(trf) || 0));
+            const expMat = obj.expenseMaterial ?? obj['รายจ่าย: ค่าวัตถุดิบ/สินค้า (บาท)'] ?? obj['ค่าวัตถุดิบ/สินค้า'] ?? 0;
+            const expOth = obj.expenseOther ?? obj['รายจ่าย: ค่าใช้จ่ายอื่นๆ ในร้าน (บาท)'] ?? obj['ค่าใช้จ่ายอื่นๆ'] ?? 0;
+            const totExp = obj.totalExpense ?? obj['รวมรายจ่าย (บาท)'] ?? obj['รวมรายจ่าย'] ?? ((Number(expMat) || 0) + (Number(expOth) || 0));
+            const note = obj.note || obj.remark || obj['หมายเหตุ (ประเภทหลักฐานประกอบ)'] || obj['หมายเหตุ'] || '';
+            grid.push([
+              String(d), String(docNo), String(desc),
+              String(cash), String(trf), String(totInc),
+              String(expMat), String(expOth), String(totExp),
+              String(note)
+            ]);
+          });
+          return grid.length > 1 ? grid : null;
+        }
+
+        return null;
+      }
+
+      function analyzeGridStructure(grid) {
+        if (!grid || grid.length === 0) return { headers: [], dataRows: [], autoMap: null };
+
+        // Check if Row 0 already matches the standard 10-column Revenue Dept format
+        const headerPattern = /วัน|date|เวลา|time|รายการ|สินค้า|เมนู|ชื่อ|รายละเอียด|จำนวน|ราคา|ยอด|รวม|เงินสด|โอน|สแกน|รายรับ|รายจ่าย|ต้นทุน|ค่าใช้จ่าย|ช่องทาง|ชำระ|หมายเหตุ|เลขที่|อ้างอิง|บิล/i;
+        let bestIdx = 0;
+        let bestScore = -1;
+        const maxScan = Math.min(grid.length, 10);
+
+        for (let r = 0; r < maxScan; r++) {
+          const row = grid[r];
+          let nonEmpty = 0, keywordHits = 0, pureNumbers = 0;
+          row.forEach(cell => {
+            const c = String(cell || '').trim();
+            if (!c) return;
+            nonEmpty++;
+            if (headerPattern.test(c)) keywordHits++;
+            if (!Number.isNaN(parseThaiNumber(c)) && !parseSmartDate(c)) pureNumbers++;
+          });
+          if (nonEmpty >= 2) {
+            const score = (keywordHits * 4) + nonEmpty - (pureNumbers * 3);
+            if (score > bestScore) { bestScore = score; bestIdx = r; }
+          }
+        }
+
+        // If row 0 is already data (e.g., gviz stripped header row), synthesize headers
+        const firstRowHasDate = parseSmartDate(grid[0][0]) !== null;
+        if (firstRowHasDate && bestIdx === 0) {
+          const synthHeaders = [
+            'วัน/เดือน/ปี',
+            'เลขที่เอกสารอ้างอิง',
+            'รายการ (รายละเอียดการรับ-จ่าย)',
+            'รายรับ: เงินสด (บาท)',
+            'รายรับ: โอนเข้าบัญชีร้าน (บาท)',
+            'รวมรายรับ (บาท)',
+            'รายจ่าย: ค่าวัตถุดิบ/สินค้า (บาท)',
+            'รายจ่าย: ค่าใช้จ่ายอื่นๆ ในร้าน (บาท)',
+            'รวมรายจ่าย (บาท)',
+            'หมายเหตุ (ประเภทหลักฐานประกอบ)'
+          ];
+          return {
+            headers: synthHeaders,
+            dataRows: grid,
+            autoMap: {
+              date: 0, docNo: 1, desc: 2, cash: 3, transfer: 4,
+              totalInc: 5, payMethod: -1, expMat: 6, expOther: 7,
+              totalExp: 8, qty: -1, note: 9, productValueCols: []
+            }
+          };
+        }
+
+        let maxCols = 0;
+        grid.forEach(r => { if (r.length > maxCols) maxCols = r.length; });
+
+        const rawHeaderRow = grid[bestIdx] || [];
+        const headers = [];
+        for (let c = 0; c < maxCols; c++) {
+          let h = String(rawHeaderRow[c] || '').trim();
+          headers.push(h || `คอลัมน์ ${c + 1}`);
+        }
+
+        const dataRows = grid.slice(bestIdx + 1).filter(row => {
+          const nonEmptyCells = row.filter(c => String(c || '').trim() !== '');
+          if (nonEmptyCells.length === 0) return false;
+          const joinedFirstCols = row.slice(0, 3).join(' ').trim();
+          if (/^(รวมทั้งสิ้น|รวมประจำ|รวมยอด|สรุปยอดรวม|สรุปรวม|ยอดรวมทั้งสิ้น|รวม$|grand\s*total|total$)/i.test(joinedFirstCols)) {
+            return false;
+          }
+          return true;
+        });
+
+        const autoMap = inferColumnMapping(headers, dataRows);
+        return { headers, dataRows, autoMap };
+      }
+
+      function inferColumnMapping(headers, dataRows) {
+        // Fast-path for standard 10-column Mae Sawing Revenue Dept sheet
+        if (
+          headers.length >= 9 &&
+          /วัน/i.test(headers[0]) &&
+          /เลขที่|เอกสาร/i.test(headers[1]) &&
+          /รายการ/i.test(headers[2]) &&
+          /เงินสด/i.test(headers[3]) &&
+          /โอน/i.test(headers[4])
+        ) {
+          return {
+            date: 0,
+            docNo: 1,
+            desc: 2,
+            cash: 3,
+            transfer: 4,
+            totalInc: 5,
+            payMethod: -1,
+            expMat: 6,
+            expOther: 7,
+            totalExp: 8,
+            qty: -1,
+            note: headers.length >= 10 ? 9 : -1,
+            productValueCols: []
+          };
+        }
+
+        const colStats = headers.map((h, idx) => {
+          let dateHits = 0, numHits = 0, textHits = 0, payMethodHits = 0;
+          const sampleCount = Math.min(dataRows.length, 25);
+          for (let r = 0; r < sampleCount; r++) {
+            const val = String((dataRows[r] && dataRows[r][idx]) || '').trim();
+            if (!val) continue;
+            if (parseSmartDate(val)) dateHits++;
+            else if (!Number.isNaN(parseThaiNumber(val))) numHits++;
+            else {
+              textHits++;
+              if (/^(เงินสด|สด|โอน|เงินโอน|สแกน|พร้อมเพย์|qr|promptpay|cash|transfer)/i.test(val)) payMethodHits++;
+            }
+          }
+          return { idx, h, dateHits, numHits, textHits, payMethodHits };
+        });
+
+        const map = {
+          date: -1, docNo: -1, desc: -1, cash: -1, transfer: -1,
+          totalInc: -1, payMethod: -1, expMat: -1, expOther: -1,
+          totalExp: -1, qty: -1, note: -1, productValueCols: []
+        };
+
+        const dateByHeader = colStats.find(c => /วัน|date|ประทับเวลา|timestamp/i.test(c.h));
+        const dateByValues = colStats.filter(c => c.dateHits > 0).sort((a, b) => b.dateHits - a.dateHits)[0];
+        if (dateByHeader) map.date = dateByHeader.idx;
+        else if (dateByValues) map.date = dateByValues.idx;
+
+        const docCol = colStats.find(c => c.idx !== map.date && /เลขที่|อ้างอิง|รหัสบิล|เลขบิล|order\s*id|inv|ref/i.test(c.h));
+        if (docCol) map.docNo = docCol.idx;
+
+        const payCol = colStats.find(c => c.idx !== map.date && (/ช่องทาง|วิธีชำระ|การชำระ|รับชำระ|ประเภทการจ่าย|payment/i.test(c.h) || c.payMethodHits >= 2));
+        if (payCol && payCol.numHits === 0) map.payMethod = payCol.idx;
+
+        const cashCol = colStats.find(c => !/รายจ่าย|ต้นทุน/.test(c.h) && /เงินสด|รับสด|cash/i.test(c.h));
+        if (cashCol && cashCol.idx !== map.payMethod) map.cash = cashCol.idx;
+
+        const trfCol = colStats.find(c => !/รายจ่าย|ต้นทุน/.test(c.h) && /โอน|สแกน|พร้อมเพย์|บัญชี|qr|transfer/i.test(c.h));
+        if (trfCol && trfCol.idx !== map.payMethod && trfCol.idx !== map.cash) map.transfer = trfCol.idx;
+
+        const expMatCol = colStats.find(c => /วัตถุดิบ|ซื้อของ|ซื้อสินค้า|ต้นทุนผลิต|ต้นทุนสินค้า/i.test(c.h));
+        if (expMatCol) map.expMat = expMatCol.idx;
+
+        const expOthCol = colStats.find(c => /ค่าใช้จ่ายอื่น|โสหุ้ย|ค่าแก๊ส|ค่าน้ำ|ค่าไฟ|ค่าส่ง/i.test(c.h));
+        if (expOthCol && expOthCol.idx !== map.expMat) map.expOther = expOthCol.idx;
+
+        const totalExpCol = colStats.find(c =>
+          c.idx !== map.expMat && c.idx !== map.expOther &&
+          /รวมรายจ่าย|รายจ่ายรวม|รายจ่าย|ค่าใช้จ่าย|ต้นทุน|expense/i.test(c.h) &&
+          !/รับ-จ่าย/i.test(c.h)
+        );
+        if (totalExpCol) map.totalExp = totalExpCol.idx;
+
+        const usedNumeric = new Set([map.date, map.docNo, map.cash, map.transfer, map.expMat, map.expOther, map.totalExp]);
+        const incCandidates = colStats.filter(c =>
+          !usedNumeric.has(c.idx) &&
+          !/รายจ่าย|ต้นทุน|กำไร|คงเหลือ|ราคาต่อ|ส่วนลด|ลำดับ/i.test(c.h.trim()) &&
+          /รวมรายรับ|รายรับรวม|ยอดขายรวม|รวมยอดขาย|รวมเป็นเงิน|จำนวนเงิน|ยอดขาย|ยอดรวม|รายรับ|สุทธิ|รวมเงิน|total|amount|sales|income/i.test(c.h)
+        );
+        if (incCandidates.length > 0) {
+          map.totalInc = incCandidates[0].idx;
+        }
+
+        const descCol = colStats.find(c =>
+          c.idx !== map.date && c.idx !== map.docNo && c.idx !== map.payMethod &&
+          /รายการ|สินค้า|เมนู|ชื่อขนม|รายละเอียด|item|product|menu|detail/i.test(c.h)
+        );
+        if (descCol) map.desc = descCol.idx;
+
+        const noteCol = colStats.find(c =>
+          c.idx !== map.desc && c.idx !== map.docNo &&
+          /หมายเหตุ|หลักฐาน|บันทึก|note|remark/i.test(c.h)
+        );
+        if (noteCol) map.note = noteCol.idx;
+
+        return map;
+      }
+
+      function buildEntriesFromGrid(headers, dataRows, map, sourceTag) {
+        if (!map || !dataRows || dataRows.length === 0) return [];
+        const entries = [];
+        let lastValidDate = null;
+
+        dataRows.forEach((row, idx) => {
+          let dateObj = map.date >= 0 ? parseSmartDate(row[map.date]) : null;
+          if (!dateObj) dateObj = parseSmartDate(row[0]) || parseSmartDate(row[1]);
+          if (dateObj) lastValidDate = dateObj;
+          else if (lastValidDate) dateObj = lastValidDate;
+
+          let cash = map.cash >= 0 ? (parseThaiNumber(row[map.cash]) || 0) : 0;
+          let transfer = map.transfer >= 0 ? (parseThaiNumber(row[map.transfer]) || 0) : 0;
+          let totalInc = map.totalInc >= 0 ? (parseThaiNumber(row[map.totalInc]) || 0) : 0;
+
+          const descRaw = map.desc >= 0 ? String(row[map.desc] || '').trim() : '';
+          const noteRaw = map.note >= 0 ? String(row[map.note] || '').trim() : '';
+
+          if (cash > 0 || transfer > 0) {
+            if (totalInc === 0 || Math.abs((cash + transfer) - totalInc) > 0.01) {
+              totalInc = cash + transfer;
+            }
+          } else if (totalInc > 0) {
+            const hintStr = `${descRaw} ${noteRaw}`;
+            if (/โอน|สแกน|พร้อมเพย์|qr|promptpay|ธนาคาร|transfer/i.test(hintStr)) {
+              transfer = totalInc;
+            } else if (/เงินสด|สด|cash/i.test(hintStr)) {
+              cash = totalInc;
+            } else if (state.defaultPayChannel === 'transfer') {
+              transfer = totalInc;
+            } else {
+              cash = totalInc;
+            }
+          }
+
+          let expMat = map.expMat >= 0 ? (parseThaiNumber(row[map.expMat]) || 0) : 0;
+          let expOther = map.expOther >= 0 ? (parseThaiNumber(row[map.expOther]) || 0) : 0;
+          let totalExp = map.totalExp >= 0 ? (parseThaiNumber(row[map.totalExp]) || 0) : 0;
+
+          if (expMat > 0 || expOther > 0) totalExp = expMat + expOther;
+          else if (totalExp > 0) expMat = totalExp;
+
+          if (totalInc <= 0 && totalExp <= 0) return;
+
+          const desc = descRaw || (totalInc > 0 ? 'ยอดขายหน้าร้าน (กระยาสารท แม่สวิง)' : 'รายการรายจ่าย');
+          const fallbackDate = dateObj || buildDateObject(6, 11, 2026);
+
+          let docNo = map.docNo >= 0 ? String(row[map.docNo] || '').trim() : '';
+          if (!docNo) {
+            const prefix = totalInc >= totalExp ? 'TX' : 'PV';
+            const cleanDay = fallbackDate.sortKey.replace(/-/g, '').slice(2);
+            docNo = `${prefix}-${cleanDay}-${String(idx + 1).padStart(3, '0')}`;
+          }
+
+          const note = noteRaw || (totalInc > 0 ? 'ดึงข้อมูลจากชีตสมุดรายรับ-รายจ่าย' : 'หลักฐานรายจ่ายในชีต');
+
+          entries.push({
+            id: `${sourceTag}-${idx}-${docNo}`,
+            source: sourceTag,
+            sortKey: fallbackDate.sortKey,
+            displayDate: fallbackDate.displayDate,
+            rawSheetDate: fallbackDate.rawSheetDate,
+            monthKey: fallbackDate.monthKey,
+            monthLabel: fallbackDate.monthLabel,
+            docNo,
+            description: desc,
+            incomeCash: cash,
+            incomeTransfer: transfer,
+            totalIncome: totalInc,
+            expenseMaterial: expMat,
+            expenseOther: expOther,
+            totalExpense: totalExp,
+            note
+          });
+        });
+
+        return entries;
+      }
+
+      // ================= STATUS HELPERS =================
+      function setPullStatus(mode, text) {
+        const pill = document.getElementById('posSyncPill');
+        const span = document.getElementById('posSyncText');
+        pill.className = 'pipe-step ' + mode;
+        span.textContent = text;
+      }
+
+      function setPushStatus(mode, text) {
+        const pill = document.getElementById('ledgerSyncPill');
+        const span = document.getElementById('ledgerSyncText');
+        pill.className = 'pipe-step ' + mode;
+        span.textContent = text;
+      }
+
+      function showSyncBanner(mode, msg) {
+        const el = document.getElementById('syncFeedbackBanner');
+        el.style.display = 'block';
+        if (mode === 'ok') {
+          el.style.background = 'var(--brand-soft)';
+          el.style.color = 'var(--brand-dark)';
+          el.style.border = '1px solid var(--brand-border)';
+        } else {
+          el.style.background = 'var(--warn-bg)';
+          el.style.color = 'var(--warn-ink)';
+          el.style.border = '1px solid var(--warn-border)';
+        }
+        el.textContent = msg;
+      }
+
+      // ================= MULTI-CHANNEL AUTOMATIC PULL FROM GOOGLE SHEET =================
+      async function pullFromGoogleSheet() {
+        if (state.isSyncing) return false;
+        state.isSyncing = true;
+        setPullStatus('loading', '1. ดึงข้อมูลจากชีต: กำลังซิงก์ข้อมูลล่าสุด...');
+
+        let loadedGrid = null;
+        let usedSourceLabel = '';
+
+        // Channel 1: Try Google Apps Script Web App GET
+        const scriptUrl = (state.appsScriptUrl || DEFAULT_APPS_SCRIPT_URL).trim();
+        if (scriptUrl) {
+          try {
+            const sep = scriptUrl.includes('?') ? '&' : '?';
+            const resp = await fetch(`${scriptUrl}${sep}action=read&_ts=${Date.now()}`, {
+              method: 'GET',
+              redirect: 'follow',
+              cache: 'no-store'
+            });
+            if (resp.ok) {
+              const text = await resp.text();
+              try {
+                const json = JSON.parse(text);
+                const grid = normalizeAppsScriptResponseToGrid(json);
+                if (grid && grid.length > 0) {
+                  loadedGrid = grid;
+                  usedSourceLabel = 'Web App';
+                }
+              } catch (parseErr) {
+                if (text && !text.trim().startsWith('<!DOCTYPE') && !text.trim().startsWith('<html')) {
+                  const csvParsed = parseDelimitedText(text, ',');
+                  if (csvParsed.length > 1) {
+                    loadedGrid = csvParsed;
+                    usedSourceLabel = 'Web App CSV';
+                  }
+                }
+              }
+            }
+          } catch (e) {
+            // Proceed to Channel 2
+          }
+        }
+
+        // Channel 2: Try Direct Google Visualization CSV endpoints
+        if (!loadedGrid) {
+          const csvUrls = buildCsvEndpoints(state.sheetUrl);
+          for (const url of csvUrls) {
+            try {
+              const sep = url.includes('?') ? '&' : '?';
+              const resp = await fetch(`${url}${sep}_ts=${Date.now()}`, { cache: 'no-store' });
+              if (!resp.ok) continue;
+              const text = await resp.text();
+              if (text && !text.trim().startsWith('<!DOCTYPE') && !text.trim().startsWith('<html')) {
+                const parsed = parseDelimitedText(text, ',');
+                if (parsed.length > 0) {
+                  loadedGrid = parsed;
+                  usedSourceLabel = 'Google Sheets CSV';
+                  break;
+                }
+              }
+            } catch (e) {
+              // Try next endpoint
+            }
+          }
+        }
+
+        // Channel 3: Try Google Visualization JSONP (works even on local file://)
+        if (!loadedGrid) {
+          const jsonpGrid = await fetchSheetViaJsonp(state.sheetUrl);
+          if (jsonpGrid && jsonpGrid.length > 0) {
+            loadedGrid = jsonpGrid;
+            usedSourceLabel = 'Google Sheets Live';
+          }
+        }
+
+        state.isSyncing = false;
+        const nowStr = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+        if (loadedGrid && loadedGrid.length > 0) {
+          ingestSheetGrid(loadedGrid);
+          setPullStatus('ok', `1. ดึงข้อมูลจากชีตสำเร็จ (${state.sheetEntries.length} รายการ · อัปเดต ${nowStr} น.)`);
+          return true;
+        }
+
+        setPullStatus('warn', `1. ดึงข้อมูลจากชีต: ไม่สามารถเชื่อมต่อได้ชั่วคราว (${nowStr} น.)`);
+        refreshAllWidgets();
+        return false;
+      }
+
+      function ingestSheetGrid(grid) {
+        state.rawGrid = grid;
+        const analyzed = analyzeGridStructure(grid);
+        state.headers = analyzed.headers;
+        state.dataRows = analyzed.dataRows;
+        state.mapping = analyzed.autoMap;
+
+        renderRawPreview();
+        state.sheetEntries = buildEntriesFromGrid(state.headers, state.dataRows, state.mapping, 'ledger');
+
+        // Reconcile manual entries: if a manual entry's docNo is now present in sheetEntries, mark it synced
+        const sheetDocNos = new Set(state.sheetEntries.map(e => (e.docNo || '').trim().toUpperCase()));
+        let changedManual = false;
+        state.manualEntries = state.manualEntries.filter(m => {
+          const key = (m.docNo || '').trim().toUpperCase();
+          if (key && sheetDocNos.has(key)) {
+            changedManual = true;
+            return false; // Already persisted in Google Sheet
+          }
+          return true;
+        });
+        if (changedManual) saveManualEntriesToStorage();
+
+        refreshMonthFilterOptions();
+        refreshAllWidgets();
+      }
+
+      function renderRawPreview() {
+        const box = document.getElementById('rawPreviewContainer');
+        if (!state.headers || state.headers.length === 0) {
+          box.style.display = 'none';
+          return;
+        }
+        box.style.display = 'block';
+        const sample = state.dataRows.slice(0, 5);
+        let html = `<div style="font-weight:600;margin-bottom:6px;color:var(--ink-secondary);">ตัวอย่างข้อมูลล่าสุดจากชีตสมุดรายรับ-รายจ่าย (${state.dataRows.length} แถว):</div>`;
+        html += '<table style="width:100%;border-collapse:collapse;font-size:12.5px;"><thead><tr>';
+        state.headers.forEach(h => {
+          html += `<th style="border:1px solid var(--border);padding:4px 8px;background:#eef3f0;text-align:left;">${escapeHtml(h)}</th>`;
+        });
+        html += '</tr></thead><tbody>';
+        sample.forEach(r => {
+          html += '<tr>';
+          state.headers.forEach((_, idx) => {
+            html += `<td style="border:1px solid var(--border);padding:4px 8px;">${escapeHtml(r[idx] || '')}</td>`;
+          });
+          html += '</tr>';
+        });
+        html += '</tbody></table>';
+        box.innerHTML = html;
+      }
+
+      // ================= AUTOMATIC PUSH / UPDATE TO GOOGLE SHEET =================
+      function entryToSheetRow(e) {
+        return [
+          e.rawSheetDate || e.displayDate,
+          e.docNo,
+          e.description,
+          Number((e.incomeCash || 0).toFixed(2)),
+          Number((e.incomeTransfer || 0).toFixed(2)),
+          Number((e.totalIncome || 0).toFixed(2)),
+          Number((e.expenseMaterial || 0).toFixed(2)),
+          Number((e.expenseOther || 0).toFixed(2)),
+          Number((e.totalExpense || 0).toFixed(2)),
+          e.note || ''
+        ];
+      }
+
+      async function pushEntriesToLedgerSheet(entriesToPush, isManualTrigger) {
+        const scriptUrl = (state.appsScriptUrl || DEFAULT_APPS_SCRIPT_URL).trim();
+        if (!scriptUrl) {
+          if (isManualTrigger) {
+            document.getElementById('settingsDrawer').classList.add('open');
+            showSyncBanner('warn', 'กรุณาตรวจสอบลิงก์ Web App ในหน้าตั้งค่า');
+          }
+          return false;
+        }
+
+        // Determine rows to push:
+        // If specific entries are passed (e.g. newly added entry), push those.
+        // Otherwise, if replace mode is chosen, push all raw entries; if upsert mode, push unsynced manual entries (or all raw entries if triggered manually).
+        let targetEntries = entriesToPush;
+        if (!targetEntries) {
+          if (state.syncWriteMode === 'replace') {
+            targetEntries = getCombinedEntries('raw');
+          } else {
+            targetEntries = state.manualEntries.length > 0
+              ? state.manualEntries.slice()
+              : (isManualTrigger ? getCombinedEntries('raw') : []);
+          }
+        }
+
+        if (!targetEntries || targetEntries.length === 0) {
+          if (isManualTrigger) {
+            showSyncBanner('ok', 'ข้อมูลในหน้าเว็บและใน Google Sheets ซิงก์ตรงกันเป็นปัจจุบันแล้ว');
+          }
+          return true;
+        }
+
+        const rows = targetEntries.map(entryToSheetRow);
+        const firstEntry = targetEntries[0];
+        const payload = {
+          action: state.syncWriteMode === 'replace' ? 'replace' : 'append',
+          mode: state.syncWriteMode,
+          spreadsheetId: extractSpreadsheetId(state.sheetUrl),
+          sheetName: LEDGER_SHEET_NAME,
+          rows: rows,
+          row: rows[0],
+          // Include named fields for single-row Apps Script handlers
+          date: firstEntry.rawSheetDate || firstEntry.displayDate,
+          displayDate: firstEntry.displayDate,
+          docNo: firstEntry.docNo,
+          description: firstEntry.description,
+          incomeCash: Number((firstEntry.incomeCash || 0).toFixed(2)),
+          incomeTransfer: Number((firstEntry.incomeTransfer || 0).toFixed(2)),
+          totalIncome: Number((firstEntry.totalIncome || 0).toFixed(2)),
+          expenseMaterial: Number((firstEntry.expenseMaterial || 0).toFixed(2)),
+          expenseOther: Number((firstEntry.expenseOther || 0).toFixed(2)),
+          totalExpense: Number((firstEntry.totalExpense || 0).toFixed(2)),
+          note: firstEntry.note || ''
+        };
+
+        setPushStatus('loading', `2. อัปเดตอัตโนมัติ: กำลังส่ง ${rows.length} รายการลงชีต...`);
+        const topBtnLbl = document.getElementById('btnPushLedgerTopLabel');
+        const tblBtnLbl = document.getElementById('btnPushLedgerTableLabel');
+        topBtnLbl.textContent = 'กำลังอัปเดตลงชีต...';
+        tblBtnLbl.textContent = 'กำลังอัปเดตลงชีต...';
+
+        let pushSucceeded = false;
+        try {
+          const resp = await fetch(scriptUrl, {
+            method: 'POST',
+            redirect: 'follow',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify(payload)
+          });
+          pushSucceeded = resp.ok || resp.type === 'opaque';
+        } catch (corsErr) {
+          // Fallback with no-cors mode so the POST body still reaches Google Apps Script
+          try {
+            await fetch(scriptUrl, {
+              method: 'POST',
+              mode: 'no-cors',
+              headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+              body: JSON.stringify(payload)
+            });
+            pushSucceeded = true;
+          } catch (innerErr) {
+            pushSucceeded = false;
+          }
+        }
+
+        const nowStr = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+        if (pushSucceeded) {
+          setPushStatus('ok', `2. อัปเดตอัตโนมัติ: บันทึกลงชีตแล้ว (${rows.length} รายการ · ${nowStr} น.)`);
+          topBtnLbl.textContent = 'อัปเดตลงชีตสำเร็จ ✓';
+          tblBtnLbl.textContent = 'อัปเดตลงชีตสำเร็จ ✓';
+          showSyncBanner('ok', `ส่งข้อมูล ${rows.length} รายการ อัปเดตลงชีต "${LEDGER_SHEET_NAME}" เรียบร้อยแล้ว (${nowStr} น.)`);
+
+          // Re-pull from Google Sheet after a short delay to confirm and reconcile
+          setTimeout(() => {
+            pullFromGoogleSheet();
+          }, 1500);
+
+          setTimeout(() => {
+            topBtnLbl.textContent = 'ส่งรายการใหม่ลงชีตเดี๋ยวนี้';
+            tblBtnLbl.textContent = 'อัปเดตข้อมูลลง Google Sheets';
+          }, 2400);
+          return true;
+        } else {
+          setPushStatus('warn', '2. อัปเดตอัตโนมัติ: รอการเชื่อมต่อเครือข่าย');
+          topBtnLbl.textContent = 'ส่งรายการใหม่ลงชีตเดี๋ยวนี้';
+          tblBtnLbl.textContent = 'อัปเดตข้อมูลลง Google Sheets';
+          if (isManualTrigger) {
+            showSyncBanner('warn', 'ไม่สามารถส่งข้อมูลไปยัง Web App ได้ในขณะนี้ รายการถูกบันทึกไว้ในเครื่องและจะซิงก์ใหม่อัตโนมัติ');
+          }
+          return false;
+        }
+      }
+
+      async function runFullSyncCycle(isManualTrigger) {
+        await pullFromGoogleSheet();
+        if (state.manualEntries.length > 0 && (state.autoSync || isManualTrigger)) {
+          await pushEntriesToLedgerSheet(state.manualEntries.slice(), Boolean(isManualTrigger));
+        } else if (isManualTrigger) {
+          showSyncBanner('ok', `ดึงข้อมูลล่าสุดจากชีตเรียบร้อยแล้ว (${state.sheetEntries.length} รายการ)`);
+        }
+      }
+
+      // ================= DATA MERGING & GROUPING =================
+      function getCombinedEntries(modeOverride) {
+        const useMode = modeOverride || state.groupMode;
+        const seenDocNos = new Set();
+        const rawCombined = [];
+
+        // Sheet entries first
+        state.sheetEntries.forEach(item => {
+          const k = (item.docNo || '').trim().toUpperCase();
+          if (k) seenDocNos.add(k);
+          rawCombined.push(item);
+        });
+
+        // Unsynced manual entries
+        state.manualEntries.forEach(item => {
+          const k = (item.docNo || '').trim().toUpperCase();
+          if (k && seenDocNos.has(k)) return;
+          if (k) seenDocNos.add(k);
+          rawCombined.push(item);
+        });
+
+        if (useMode === 'daily') {
+          const groupedSalesMap = new Map();
+          const otherEntries = [];
+
+          rawCombined.forEach(item => {
+            if (item.totalIncome > 0 && item.totalExpense === 0) {
+              const key = item.sortKey;
+              if (!groupedSalesMap.has(key)) {
+                groupedSalesMap.set(key, {
+                  id: `daily-${item.sortKey}`,
+                  source: item.source,
+                  sortKey: item.sortKey,
+                  displayDate: item.displayDate,
+                  rawSheetDate: item.rawSheetDate,
+                  monthKey: item.monthKey,
+                  monthLabel: item.monthLabel,
+                  docNo: `RV-${item.sortKey.replace(/-/g, '').slice(2)}`,
+                  description: 'สรุปยอดขายหน้าร้านประจำวัน',
+                  count: 0,
+                  incomeCash: 0,
+                  incomeTransfer: 0,
+                  totalIncome: 0,
+                  expenseMaterial: 0,
+                  expenseOther: 0,
+                  totalExpense: 0,
+                  note: 'สรุปรวมยอดขายรายวันจากชีตสมุดบัญชี'
+                });
+              }
+              const g = groupedSalesMap.get(key);
+              g.count += 1;
+              g.incomeCash += item.incomeCash;
+              g.incomeTransfer += item.incomeTransfer;
+              g.totalIncome += item.totalIncome;
+              g.description = `สรุปยอดขายหน้าร้านประจำวัน (${g.count} บิล)`;
+            } else {
+              otherEntries.push(item);
+            }
+          });
+
+          const dailyList = Array.from(groupedSalesMap.values()).concat(otherEntries);
+          dailyList.sort((a, b) => a.sortKey.localeCompare(b.sortKey));
+          return dailyList;
+        }
+
+        rawCombined.sort((a, b) => a.sortKey.localeCompare(b.sortKey));
+        return rawCombined;
+      }
+
+      function refreshMonthFilterOptions() {
+        const sel = document.getElementById('monthFilter');
+        const current = state.monthFilter;
+        const all = getCombinedEntries('raw');
+        const monthMap = new Map();
+
+        all.forEach(e => {
+          if (e.monthKey && e.monthKey !== 'UNKNOWN') monthMap.set(e.monthKey, e.monthLabel);
+        });
+
+        const sortedKeys = Array.from(monthMap.keys()).sort();
+        let html = '<option value="ALL">ทั้งหมดทุกเดือน</option>';
+        sortedKeys.forEach(k => {
+          html += `<option value="${escapeHtml(k)}">${escapeHtml(monthMap.get(k))}</option>`;
+        });
+        sel.innerHTML = html;
+
+        if (sortedKeys.includes(current)) {
+          sel.value = current;
+        } else {
+          state.monthFilter = 'ALL';
+          sel.value = 'ALL';
+        }
+      }
+
+      function getFilteredEntries() {
+        const all = getCombinedEntries();
+        const q = state.searchQuery.trim().toLowerCase();
+
+        return all.filter(item => {
+          if (state.monthFilter !== 'ALL' && item.monthKey !== state.monthFilter) return false;
+          if (state.txFilter === 'income' && item.totalIncome <= 0) return false;
+          if (state.txFilter === 'expense' && item.totalExpense <= 0) return false;
+          if (q) {
+            const hay = `${item.displayDate} ${item.docNo} ${item.description} ${item.note}`.toLowerCase();
+            if (!hay.includes(q)) return false;
+          }
+          return true;
+        });
+      }
+
+      // ================= RENDER ALL UI WIDGETS =================
+      function refreshAllWidgets() {
+        const filtered = getFilteredEntries();
+
+        let sumCash = 0, sumTransfer = 0, sumIncome = 0;
+        let sumMat = 0, sumOther = 0, sumExpense = 0;
+        let incRows = 0, expRows = 0;
+
+        filtered.forEach(e => {
+          sumCash += e.incomeCash;
+          sumTransfer += e.incomeTransfer;
+          sumIncome += e.totalIncome;
+          sumMat += e.expenseMaterial;
+          sumOther += e.expenseOther;
+          sumExpense += e.totalExpense;
+          if (e.totalIncome > 0) incRows++;
+          if (e.totalExpense > 0) expRows++;
+        });
+
+        const netProfit = sumIncome - sumExpense;
+        const marginPct = sumIncome > 0 ? (netProfit / sumIncome) * 100 : 0;
+        const costRatioPct = sumIncome > 0 ? (sumExpense / sumIncome) * 100 : 0;
+
+        // Period Hint
+        const monthSel = document.getElementById('monthFilter');
+        const periodText = monthSel.options[monthSel.selectedIndex]
+          ? monthSel.options[monthSel.selectedIndex].textContent
+          : 'ทั้งหมดทุกเดือน';
+        document.getElementById('periodSummaryHint').textContent = `กำลังแสดง: ${periodText} (${filtered.length} รายการ)`;
+
+        // KPI 1: Income + Split Bar
+        document.getElementById('kpiTotalIncome').textContent = formatBaht(sumIncome);
+        document.getElementById('kpiCashIncome').textContent = formatBaht(sumCash);
+        document.getElementById('kpiTransferIncome').textContent = formatBaht(sumTransfer);
+        document.getElementById('kpiIncCount').textContent = `${incRows} รายการ`;
+        const cashPct = sumIncome > 0 ? (sumCash / sumIncome) * 100 : 50;
+        document.getElementById('barCashShare').style.width = `${cashPct}%`;
+        document.getElementById('barTrfShare').style.width = `${100 - cashPct}%`;
+
+        // KPI 2: Expense + Split Bar
+        document.getElementById('kpiTotalExpense').textContent = formatBaht(sumExpense);
+        document.getElementById('kpiMatExpense').textContent = formatBaht(sumMat);
+        document.getElementById('kpiOtherExpense').textContent = formatBaht(sumOther);
+        document.getElementById('kpiExpCount').textContent = `${expRows} รายการ`;
+        const matPct = sumExpense > 0 ? (sumMat / sumExpense) * 100 : 70;
+        document.getElementById('barMatShare').style.width = `${matPct}%`;
+        document.getElementById('barOthShare').style.width = `${100 - matPct}%`;
+
+        // KPI 3: Profit & VAT Ceiling
+        const netEl = document.getElementById('kpiNetProfit');
+        netEl.textContent = formatBaht(netProfit);
+        netEl.style.color = netProfit >= 0 ? 'var(--inc-head)' : 'var(--danger-ink)';
+        document.getElementById('kpiProfitMargin').textContent = `กำไรสุทธิ ${marginPct.toFixed(1)}%`;
+        document.getElementById('kpiCostRatio').textContent = `${costRatioPct.toFixed(1)}%`;
+
+        const vatRemain = Math.max(0, 1800000 - sumIncome);
+        const vatPct = Math.min(100, (sumIncome / 1800000) * 100);
+        document.getElementById('barVatProgress').style.width = `${vatPct}%`;
+        document.getElementById('kpiVatTrack').textContent =
+          sumIncome >= 1800000 ? 'ถึงเกณฑ์จด VAT แล้ว' : formatBaht(vatRemain);
+
+        // Tax Section 40(8) Visual Decision Card
+        const flatDeduct = sumIncome * 0.6;
+        const flatNet = sumIncome - flatDeduct;
+        const actualDeduct = sumExpense;
+        const actualNet = Math.max(0, sumIncome - actualDeduct);
+
+        document.getElementById('gaugeRatioLabel').textContent = `${costRatioPct.toFixed(1)}%`;
+        document.getElementById('gaugeRatioFill').style.width = `${Math.min(100, costRatioPct)}%`;
+
+        document.getElementById('valFlatDeduct').textContent = `หักต้นทุนได้ ${formatBaht(flatDeduct)}`;
+        document.getElementById('valFlatNet').textContent = formatBaht(flatNet);
+        document.getElementById('valActualDeduct').textContent = `หักต้นทุนได้ ${formatBaht(actualDeduct)}`;
+        document.getElementById('valActualNet').textContent = formatBaht(actualNet);
+
+        const boxFlat = document.getElementById('taxBoxFlat');
+        const boxActual = document.getElementById('taxBoxActual');
+        const chipFlat = document.getElementById('chipFlat');
+        const chipActual = document.getElementById('chipActual');
+        const adviceEl = document.getElementById('taxAdviceSummary');
+        const verdictBadge = document.getElementById('taxVerdictBadge');
+
+        boxFlat.classList.remove('recommended');
+        boxActual.classList.remove('recommended');
+        chipFlat.style.display = 'none';
+        chipActual.style.display = 'none';
+
+        if (sumIncome === 0 && sumExpense === 0) {
+          verdictBadge.textContent = 'รอข้อมูลรายรับ-รายจ่าย';
+          adviceEl.textContent = 'เมื่อมียอดขายหรือรายจ่าย ระบบจะคำนวณเปรียบเทียบวิธีหักค่าใช้จ่ายให้ทันที';
+        } else if (actualDeduct > flatDeduct) {
+          boxActual.classList.add('recommended');
+          chipActual.style.display = 'inline-block';
+          verdictBadge.textContent = 'แนะนำ: เลือก "หักตามจริง"';
+          adviceEl.textContent = `ต้นทุนจริงอยู่ที่ ${costRatioPct.toFixed(1)}% (สูงกว่าเกณฑ์เหมา 60%) การเลือก "หักตามจริง" (โดยเก็บใบเสร็จ/ใบสำคัญรับเงินครบ) ช่วยหักต้นทุนได้มากกว่าถึง ${formatBaht(actualDeduct - flatDeduct)}`;
+        } else {
+          boxFlat.classList.add('recommended');
+          chipFlat.style.display = 'inline-block';
+          verdictBadge.textContent = 'แนะนำ: เลือก "หักเหมา 60%"';
+          adviceEl.textContent = `ต้นทุนจริงอยู่ที่ ${costRatioPct.toFixed(1)}% (ไม่เกิน 60%) การเลือก "หักเหมา 60%" คุ้มค่ากว่าและไม่ต้องยื่นบิลรายจ่าย ช่วยหักต้นทุนได้มากกว่าถึง ${formatBaht(flatDeduct - actualDeduct)}`;
+        }
+
+        renderLedgerTable(filtered, {
+          sumCash, sumTransfer, sumIncome, sumMat, sumOther, sumExpense, netProfit
+        });
+        renderCharts(filtered, { sumCash, sumTransfer, sumMat, sumOther });
+      }
+
+      function renderLedgerTable(entries, totals) {
+        const tbody = document.getElementById('ledgerTbody');
+        const tfoot = document.getElementById('ledgerTfoot');
+        const emptyBox = document.getElementById('emptyStateBox');
+
+        if (entries.length === 0) {
+          tbody.innerHTML = '';
+          tfoot.style.display = 'none';
+          emptyBox.style.display = 'block';
+          return;
+        }
+
+        emptyBox.style.display = 'none';
+        tfoot.style.display = '';
+
+        let html = '';
+        entries.forEach(e => {
+          const badgeClass = e.source === 'ledger' ? 'doc-badge ledger' : 'doc-badge';
+          const deleteBtn = e.source === 'manual'
+            ? `<button type="button" class="btn-danger-ghost" data-delid="${escapeHtml(e.id)}" title="ลบรายการนี้">ลบ</button>`
+            : '';
+
+          html += `<tr>
+            <td class="col-meta num" style="font-weight:700;">${escapeHtml(e.displayDate)}</td>
+            <td class="col-meta"><span class="${badgeClass}">${escapeHtml(e.docNo)}</span></td>
+            <td class="col-meta" style="font-weight:500;">${escapeHtml(e.description)}</td>
+            <td class="col-inc ${e.incomeCash === 0 ? 'zero-dash' : ''}">${formatCellDisplay(e.incomeCash)}</td>
+            <td class="col-inc ${e.incomeTransfer === 0 ? 'zero-dash' : ''}">${formatCellDisplay(e.incomeTransfer)}</td>
+            <td class="col-inc-total ${e.totalIncome === 0 ? 'zero-dash' : ''}">${formatCellDisplay(e.totalIncome)}</td>
+            <td class="col-exp ${e.expenseMaterial === 0 ? 'zero-dash' : ''}">${formatCellDisplay(e.expenseMaterial)}</td>
+            <td class="col-exp ${e.expenseOther === 0 ? 'zero-dash' : ''}">${formatCellDisplay(e.expenseOther)}</td>
+            <td class="col-exp-total ${e.totalExpense === 0 ? 'zero-dash' : ''}">${formatCellDisplay(e.totalExpense)}</td>
+            <td class="col-note">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+                <span class="source-tag">${escapeHtml(e.note)}</span>
+                ${deleteBtn}
+              </div>
+            </td>
+          </tr>`;
+        });
+
+        tbody.innerHTML = html;
+
+        tbody.querySelectorAll('[data-delid]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const id = btn.getAttribute('data-delid');
+            state.manualEntries = state.manualEntries.filter(m => m.id !== id);
+            saveManualEntriesToStorage();
+            refreshMonthFilterOptions();
+            refreshAllWidgets();
+          });
+        });
+
+        document.getElementById('tfootLabel').textContent = `รวมประจำงวด (${entries.length} รายการ)`;
+        document.getElementById('tfootCash').textContent = formatCellExact(totals.sumCash);
+        document.getElementById('tfootTransfer').textContent = formatCellExact(totals.sumTransfer);
+        document.getElementById('tfootIncTotal').textContent = formatCellExact(totals.sumIncome);
+        document.getElementById('tfootMat').textContent = formatCellExact(totals.sumMat);
+        document.getElementById('tfootOther').textContent = formatCellExact(totals.sumOther);
+        document.getElementById('tfootExpTotal').textContent = formatCellExact(totals.sumExpense);
+        document.getElementById('tfootNetSummary').textContent = `กำไรสุทธิ: ${formatBaht(totals.netProfit)}`;
+      }
+
+      function renderCharts(entries, parts) {
+        const dailyMap = new Map();
+        entries.forEach(e => {
+          const key = e.sortKey + '|' + e.displayDate;
+          if (!dailyMap.has(key)) dailyMap.set(key, { label: e.displayDate, inc: 0, exp: 0 });
+          const d = dailyMap.get(key);
+          d.inc += e.totalIncome;
+          d.exp += e.totalExpense;
+        });
+
+        const dailyArr = Array.from(dailyMap.values());
+        const labels = dailyArr.map(d => d.label);
+        const incSeries = dailyArr.map(d => d.inc);
+        const expSeries = dailyArr.map(d => d.exp);
+
+        if (typeof Chart === 'undefined') {
+          renderHtmlChartFallback(parts);
+          return;
+        }
+
+        const ctxTrend = document.getElementById('trendChart');
+        if (trendChartInstance) trendChartInstance.destroy();
+
+        trendChartInstance = new Chart(ctxTrend, {
+          type: 'bar',
+          data: {
+            labels: labels.length ? labels : ['ยังไม่มีข้อมูล'],
+            datasets: [
+              {
+                label: 'รายรับ (บาท)',
+                data: incSeries.length ? incSeries : [0],
+                backgroundColor: 'rgba(16, 185, 129, 0.85)',
+                borderColor: '#059669',
+                borderWidth: 1,
+                borderRadius: 6,
+                maxBarThickness: 38
+              },
+              {
+                label: 'รายจ่าย (บาท)',
+                data: expSeries.length ? expSeries : [0],
+                backgroundColor: 'rgba(245, 158, 11, 0.85)',
+                borderColor: '#d97706',
+                borderWidth: 1,
+                borderRadius: 6,
+                maxBarThickness: 38
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+              legend: {
+                position: 'top',
+                labels: { font: { family: "'Anuphan', 'Sarabun', sans-serif", size: 13 } }
+              },
+              tooltip: {
+                callbacks: {
+                  label: ctx => `${ctx.dataset.label}: ฿${fmtMoney.format(ctx.parsed.y || 0)}`
+                }
+              }
+            },
+            scales: {
+              x: {
+                grid: { display: false },
+                ticks: { maxRotation: 35, font: { family: "'Sarabun', sans-serif", size: 12.5 } }
+              },
+              y: {
+                beginAtZero: true,
+                ticks: {
+                  callback: v => '฿' + Number(v).toLocaleString('th-TH'),
+                  font: { family: "'Sarabun', sans-serif", size: 12.5 }
+                }
+              }
+            }
+          }
+        });
+
+        const ctxBreak = document.getElementById('breakdownChart');
+        if (breakdownChartInstance) breakdownChartInstance.destroy();
+
+        breakdownChartInstance = new Chart(ctxBreak, {
+          type: 'bar',
+          data: {
+            labels: [
+              'รายรับ: เงินสด',
+              'รายรับ: โอนเข้าบัญชีร้าน',
+              'รายจ่าย: ค่าวัตถุดิบ/สินค้า',
+              'รายจ่าย: ค่าใช้จ่ายอื่นๆ'
+            ],
+            datasets: [{
+              label: 'จำนวนเงิน (บาท)',
+              data: [parts.sumCash, parts.sumTransfer, parts.sumMat, parts.sumOther],
+              backgroundColor: [
+                'rgba(16, 185, 129, 0.88)',
+                'rgba(5, 150, 105, 0.88)',
+                'rgba(234, 88, 12, 0.88)',
+                'rgba(217, 119, 6, 0.88)'
+              ],
+              borderRadius: 6,
+              maxBarThickness: 32
+            }]
+          },
+          options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: ctx => `฿${fmtMoney.format(ctx.parsed.x || 0)}`
+                }
+              }
+            },
+            scales: {
+              x: {
+                beginAtZero: true,
+                ticks: {
+                  callback: v => '฿' + Number(v).toLocaleString('th-TH'),
+                  font: { family: "'Sarabun', sans-serif", size: 12.5 }
+                }
+              },
+              y: {
+                grid: { display: false },
+                ticks: { font: { family: "'Anuphan', 'Sarabun', sans-serif", size: 13 } }
+              }
+            }
+          }
+        });
+      }
+
+      function renderHtmlChartFallback(parts) {
+        const wrap2 = document.getElementById('breakdownChartWrap');
+        const maxVal = Math.max(parts.sumCash, parts.sumTransfer, parts.sumMat, parts.sumOther, 1);
+        const items = [
+          { label: 'รายรับ: เงินสด', val: parts.sumCash, color: '#10b981' },
+          { label: 'รายรับ: โอนเข้าบัญชีร้าน', val: parts.sumTransfer, color: '#059669' },
+          { label: 'รายจ่าย: ค่าวัตถุดิบ/สินค้า', val: parts.sumMat, color: '#ea580c' },
+          { label: 'รายจ่าย: ค่าใช้จ่ายอื่นๆ', val: parts.sumOther, color: '#d97706' }
+        ];
+        wrap2.innerHTML = '<div class="fallback-bars">' + items.map(it => `
+          <div class="fallback-row">
+            <div style="display:flex;justify-content:space-between;"><span>${it.label}</span><strong class="num">${formatBaht(it.val)}</strong></div>
+            <div class="fallback-track"><div class="fallback-fill" style="width:${(it.val / maxVal) * 100}%;background:${it.color};"></div></div>
+          </div>
+        `).join('') + '</div>';
+      }
+
+      // ================= QUICK PRESETS IN ADD FORM =================
+      function renderPresetChips(txType) {
+        const bar = document.getElementById('presetChipsBar');
+        const list = PRESETS_BY_TYPE[txType] || [];
+        let html = '<span style="font-size:13px;font-weight:600;color:var(--muted);">กรอกด่วน:</span>';
+        list.forEach((p, idx) => {
+          html += `<button type="button" class="preset-chip" data-pidx="${idx}">${escapeHtml(p.label)}</button>`;
+        });
+        bar.innerHTML = html;
+
+        bar.querySelectorAll('.preset-chip').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const p = list[parseInt(btn.getAttribute('data-pidx'), 10)];
+            if (!p) return;
+            document.getElementById('inDesc').value = p.label;
+            document.getElementById('inEvidence').value = p.ev;
+            document.getElementById('inAmount').focus();
+          });
+        });
+      }
+
+      // ================= STORAGE PERSISTENCE =================
+      function loadStoredState() {
+        try {
+          const rawManual = localStorage.getItem('maesawing_manual_ledger_v2');
+          if (rawManual) {
+            const parsed = JSON.parse(rawManual);
+            if (Array.isArray(parsed)) state.manualEntries = parsed;
+          }
+          const rawCfg = localStorage.getItem('maesawing_sync_config_v2');
+          if (rawCfg) {
+            const cfg = JSON.parse(rawCfg);
+            if (cfg.sheetUrl && cfg.sheetUrl.includes(LEDGER_SPREADSHEET_ID)) {
+              state.sheetUrl = cfg.sheetUrl;
+            }
+            if (cfg.appsScriptUrl && cfg.appsScriptUrl.startsWith('https://script.google.com/')) {
+              state.appsScriptUrl = cfg.appsScriptUrl;
+            }
+            if (typeof cfg.autoSync === 'boolean') state.autoSync = cfg.autoSync;
+            if (cfg.syncWriteMode) state.syncWriteMode = cfg.syncWriteMode;
+            if (cfg.defaultPayChannel) state.defaultPayChannel = cfg.defaultPayChannel;
+          }
+        } catch (e) { /* sandboxed storage ignored */ }
+      }
+
+      function saveManualEntriesToStorage() {
+        try {
+          localStorage.setItem('maesawing_manual_ledger_v2', JSON.stringify(state.manualEntries));
+        } catch (e) { /* ignore */ }
+      }
+
+      function saveSyncConfigToStorage() {
+        try {
+          localStorage.setItem('maesawing_sync_config_v2', JSON.stringify({
+            sheetUrl: state.sheetUrl,
+            appsScriptUrl: state.appsScriptUrl,
+            autoSync: state.autoSync,
+            syncWriteMode: state.syncWriteMode,
+            defaultPayChannel: state.defaultPayChannel
+          }));
+        } catch (e) { /* ignore */ }
+      }
+
+      function setupAutoSyncTimer() {
+        if (autoSyncTimer) clearInterval(autoSyncTimer);
+        if (state.autoSync) {
+          // Pull latest sheet data automatically every 30 seconds
+          autoSyncTimer = setInterval(() => {
+            pullFromGoogleSheet();
+          }, 30000);
+        }
+      }
+
+      // ================= EVENT LISTENERS =================
+      function initEvents() {
+        document.getElementById('topLedgerSheetLink').href = DEFAULT_SHEET_URL;
+        document.getElementById('inDate').value = new Date().toISOString().slice(0, 10);
+        document.getElementById('sheetUrlInput').value = state.sheetUrl;
+        document.getElementById('appsScriptUrlInput').value = state.appsScriptUrl;
+        document.getElementById('autoSyncToggle').checked = state.autoSync;
+        document.getElementById('syncWriteMode').value = state.syncWriteMode;
+        document.getElementById('defaultPayChannel').value = state.defaultPayChannel;
+        document.getElementById('appsScriptCodeBlock').textContent = buildAppsScriptSnippet();
+
+        renderPresetChips('exp_mat');
+
+        // Logo Upload & Drag-and-Drop (logo.png)
+        const logoInput = document.getElementById('logoFileInput');
+        const logoSlot = document.getElementById('logoSlot');
+
+        document.getElementById('btnUploadLogo').addEventListener('click', () => logoInput.click());
+        logoSlot.addEventListener('click', () => logoInput.click());
+        logoSlot.addEventListener('keydown', e => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            logoInput.click();
+          }
+        });
+
+        logoSlot.addEventListener('dragover', e => {
+          e.preventDefault();
+          logoSlot.classList.add('dragover');
+        });
+        logoSlot.addEventListener('dragleave', () => logoSlot.classList.remove('dragover'));
+        logoSlot.addEventListener('drop', e => {
+          e.preventDefault();
+          logoSlot.classList.remove('dragover');
+          if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) {
+            handleLogoFile(e.dataTransfer.files[0]);
+          }
+        });
+
+        logoInput.addEventListener('change', e => {
+          if (e.target.files && e.target.files[0]) {
+            handleLogoFile(e.target.files[0]);
+            logoInput.value = '';
+          }
+        });
+
+        document.getElementById('btnClearLogo').addEventListener('click', () => {
+          applyLogoDataUrl(null);
+          try { localStorage.removeItem('maesawing_logo_dataurl_v1'); } catch (e) { /* ignore */ }
+        });
+
+        // Drawers
+        const settingsDrawer = document.getElementById('settingsDrawer');
+        const addEntryDrawer = document.getElementById('addEntryDrawer');
+
+        document.getElementById('btnToggleSettings').addEventListener('click', () => {
+          settingsDrawer.classList.toggle('open');
+        });
+        document.getElementById('btnCloseSettings').addEventListener('click', () => {
+          settingsDrawer.classList.remove('open');
+        });
+
+        document.getElementById('btnToggleAddForm').addEventListener('click', () => {
+          addEntryDrawer.classList.toggle('open');
+          if (addEntryDrawer.classList.contains('open')) {
+            document.getElementById('inAmount').focus();
+          }
+        });
+        document.getElementById('btnCloseAddForm').addEventListener('click', () => {
+          addEntryDrawer.classList.remove('open');
+        });
+
+        // Type Tile Selection in Add Entry Form
+        document.querySelectorAll('.type-tile').forEach(tile => {
+          tile.addEventListener('click', () => {
+            const val = tile.getAttribute('data-typeval');
+            document.getElementById('inType').value = val;
+            document.querySelectorAll('.type-tile').forEach(t => {
+              t.classList.remove('active-inc', 'active-exp');
+            });
+            tile.classList.add(val.startsWith('inc_') ? 'active-inc' : 'active-exp');
+            renderPresetChips(val);
+          });
+        });
+
+        // Sync Controls
+        document.getElementById('autoSyncToggle').addEventListener('change', e => {
+          state.autoSync = e.target.checked;
+          saveSyncConfigToStorage();
+          setupAutoSyncTimer();
+        });
+
+        document.getElementById('btnSyncAllNow').addEventListener('click', () => {
+          runFullSyncCycle(true);
+        });
+
+        document.getElementById('btnResetDefaults').addEventListener('click', () => {
+          state.sheetUrl = DEFAULT_SHEET_URL;
+          state.appsScriptUrl = DEFAULT_APPS_SCRIPT_URL;
+          document.getElementById('sheetUrlInput').value = state.sheetUrl;
+          document.getElementById('appsScriptUrlInput').value = state.appsScriptUrl;
+          saveSyncConfigToStorage();
+          runFullSyncCycle(true);
+        });
+
+        document.getElementById('btnSaveAndSync').addEventListener('click', () => {
+          state.sheetUrl = document.getElementById('sheetUrlInput').value.trim() || DEFAULT_SHEET_URL;
+          state.appsScriptUrl = document.getElementById('appsScriptUrlInput').value.trim() || DEFAULT_APPS_SCRIPT_URL;
+          state.syncWriteMode = document.getElementById('syncWriteMode').value;
+          state.defaultPayChannel = document.getElementById('defaultPayChannel').value;
+          saveSyncConfigToStorage();
+          runFullSyncCycle(true);
+        });
+
+        document.getElementById('btnPushLedgerTop').addEventListener('click', () => {
+          pushEntriesToLedgerSheet(null, true);
+        });
+        document.getElementById('btnPushLedgerTable').addEventListener('click', () => {
+          pushEntriesToLedgerSheet(null, true);
+        });
+
+        // Copy Apps Script Snippet
+        const btnCopyScript = document.getElementById('btnCopyAppsScript');
+        btnCopyScript.addEventListener('click', async () => {
+          try {
+            await navigator.clipboard.writeText(buildAppsScriptSnippet());
+            const orig = btnCopyScript.textContent;
+            btnCopyScript.textContent = 'คัดลอกโค้ดแล้ว ✓';
+            setTimeout(() => { btnCopyScript.textContent = orig; }, 2000);
+          } catch (e) { /* ignore */ }
+        });
+
+        // Paste manual CSV/TSV fallback
+        document.getElementById('btnParsePasted').addEventListener('click', () => {
+          const txt = document.getElementById('manualCsvPaste').value;
+          if (!txt.trim()) return;
+          const delim = txt.includes('\t') ? '\t' : ',';
+          const grid = parseDelimitedText(txt, delim);
+          if (grid.length > 0) {
+            ingestSheetGrid(grid);
+            setPullStatus('ok', `1. นำเข้าข้อมูลจากตารางสำเร็จ (${state.sheetEntries.length} รายการ)`);
+          }
+        });
+
+        // Submit New Entry Form -> Auto-Update to Google Sheets immediately
+        document.getElementById('entryForm').addEventListener('submit', async e => {
+          e.preventDefault();
+          const errEl = document.getElementById('formErrorMsg');
+          const rawDate = document.getElementById('inDate').value;
+          const txType = document.getElementById('inType').value;
+          const docNoInput = document.getElementById('inDocNo').value.trim();
+          const amountVal = parseFloat(document.getElementById('inAmount').value);
+          const descVal = document.getElementById('inDesc').value.trim();
+          const evidenceVal = document.getElementById('inEvidence').value;
+
+          if (!rawDate || !descVal || !Number.isFinite(amountVal) || amountVal <= 0) {
+            errEl.textContent = 'กรุณากรอกวันที่ รายละเอียด และจำนวนเงินที่มากกว่า 0 บาทให้ครบถ้วน';
+            errEl.style.display = 'block';
+            return;
+          }
+          errEl.style.display = 'none';
+
+          const dObj = parseSmartDate(rawDate);
+          const isInc = txType.startsWith('inc_');
+          const autoPrefix = isInc ? 'RV' : 'PV';
+          const nextIdx = state.sheetEntries.length + state.manualEntries.length + 1;
+          const finalDocNo = docNoInput || `${autoPrefix}-${dObj.monthKey.replace('-', '')}-${String(nextIdx).padStart(3, '0')}`;
+
+          const entry = {
+            id: `man-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+            source: 'manual',
+            sortKey: dObj.sortKey,
+            displayDate: dObj.displayDate,
+            rawSheetDate: dObj.rawSheetDate,
+            monthKey: dObj.monthKey,
+            monthLabel: dObj.monthLabel,
+            docNo: finalDocNo,
+            description: descVal,
+            incomeCash: txType === 'inc_cash' ? amountVal : 0,
+            incomeTransfer: txType === 'inc_trf' ? amountVal : 0,
+            totalIncome: isInc ? amountVal : 0,
+            expenseMaterial: txType === 'exp_mat' ? amountVal : 0,
+            expenseOther: txType === 'exp_oth' ? amountVal : 0,
+            totalExpense: !isInc ? amountVal : 0,
+            note: evidenceVal
+          };
+
+          state.manualEntries.push(entry);
+          saveManualEntriesToStorage();
+
+          document.getElementById('inAmount').value = '';
+          document.getElementById('inDesc').value = '';
+          document.getElementById('inDocNo').value = '';
+
+          refreshMonthFilterOptions();
+          refreshAllWidgets();
+
+          // Immediately push the newly created entry to Google Sheets
+          await pushEntriesToLedgerSheet([entry], false);
+        });
+
+        // Filters & Search
+        document.getElementById('monthFilter').addEventListener('change', e => {
+          state.monthFilter = e.target.value;
+          refreshAllWidgets();
+        });
+
+        document.getElementById('searchInput').addEventListener('input', e => {
+          state.searchQuery = e.target.value;
+          refreshAllWidgets();
+        });
+
+        document.querySelectorAll('[data-groupmode]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            document.querySelectorAll('[data-groupmode]').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            state.groupMode = btn.getAttribute('data-groupmode');
+            refreshAllWidgets();
+          });
+        });
+
+        document.querySelectorAll('[data-txfilter]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            document.querySelectorAll('[data-txfilter]').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            state.txFilter = btn.getAttribute('data-txfilter');
+            refreshAllWidgets();
+          });
+        });
+
+        // Copy TSV for direct paste into Google Sheets
+        const btnCopy = document.getElementById('btnCopyTsv');
+        btnCopy.addEventListener('click', async () => {
+          const entries = getFilteredEntries();
+          if (entries.length === 0) return;
+
+          const lines = entries.map(e => [
+            e.displayDate,
+            e.docNo,
+            e.description.replace(/[\t\r\n]+/g, ' '),
+            e.incomeCash.toFixed(2),
+            e.incomeTransfer.toFixed(2),
+            e.totalIncome.toFixed(2),
+            e.expenseMaterial.toFixed(2),
+            e.expenseOther.toFixed(2),
+            e.totalExpense.toFixed(2),
+            e.note.replace(/[\t\r\n]+/g, ' ')
+          ].join('\t'));
+
+          try {
+            await navigator.clipboard.writeText(lines.join('\n'));
+            const origText = btnCopy.textContent;
+            btnCopy.textContent = 'คัดลอกตารางแล้ว ✓';
+            setTimeout(() => { btnCopy.textContent = origText; }, 1800);
+          } catch (err) { /* ignore */ }
+        });
+
+        // Auto-refresh when switching back to the browser tab
+        document.addEventListener('visibilitychange', () => {
+          if (document.visibilityState === 'visible' && state.autoSync) {
+            pullFromGoogleSheet();
+          }
+        });
+        window.addEventListener('focus', () => {
+          if (state.autoSync) {
+            pullFromGoogleSheet();
+          }
+        });
+      }
+
+      // Initialize App
+      loadSavedLogo();
+      loadStoredState();
+      initEvents();
+      refreshAllWidgets();
+      setupAutoSyncTimer();
+      runFullSyncCycle(false);
+    })();
+  </script>
+</body>
+</html>
